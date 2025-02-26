@@ -4,7 +4,7 @@ import requests
 app = Flask(__name__)
 
 VERIFY_TOKEN = "your_verify_token"
-PAGE_ACCESS_TOKEN = "your_page_access_token"
+PAGE_ACCESS_TOKEN = "EAANlu9ZCmDo0BOZBrNQhbfxkSYd4MiJrrVBeZBDifOM9gQhTHqz5R3IVpsrk0Uv8oEyFUVx3tisGZARE0druzx2KNZA9VYjuUVJn6xvN4VkvCXhyEbAIv66wyUlAQy9D1ZCkfecBvBjz99qZA6AtGbTyvGttqYud2G7XSKV66e9SgRxurpF8AFtIsPZBknM9x3Pt"
 
 @app.route("/", methods=["GET"])
 def verify():
