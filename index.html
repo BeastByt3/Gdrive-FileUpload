@@ -15,7 +15,7 @@
     h2 {
       text-align: center;
     }
-    label, select, input[type="file"], button {
+    label, select, input[type="file"], button, input[type="text"] {
       display: block;
       width: 100%;
       margin-bottom: 15px;
@@ -43,6 +43,7 @@
       padding: 10px;
       border-radius: 8px;
       border: 1px solid #ddd;
+      font-size: 15px;
     }
   </style>
 </head>
@@ -95,21 +96,26 @@
 
   <div id="output">Waiting for upload...</div>
 
+  <!-- Google API JS -->
   <script src="https://apis.google.com/js/api.js"></script>
   <script>
-    const CLIENT_ID = '526441448305-4cr9uaualqc0lhifam4ldm3i9huarvjc.apps.googleusercontent.com';  // ← Replace this with your real OAuth 2.0 Client ID
+    const CLIENT_ID = '526441448305-4cr9uaualqc0lhifam4ldm3i9huarvjc.apps.googleusercontent.com';
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-    const FOLDER_ID = '1OowiNexHtFBRxjSAb50idW75hYEMAh4n';  // Your Drive folder ID
-
-    function start() {
-      gapi.load('client:auth2', () => {
-        gapi.client.init({ clientId: CLIENT_ID, scope: SCOPES });
-      });
-    }
+    const FOLDER_ID = '1OowiNexHtFBRxjSAb50idW75hYEMAh4n'; // <- Your shared Drive folder
 
     function checkOther(sel) {
       document.getElementById('otherCategory').style.display =
         sel.value === 'OTHER' ? 'block' : 'none';
+    }
+
+    function start() {
+      gapi.load('client:auth2', () => {
+        gapi.client.init({ clientId: CLIENT_ID, scope: SCOPES })
+          .then(() => console.log("✅ GAPI initialized"))
+          .catch(err => {
+            document.getElementById("output").textContent = "❌ GAPI init error: " + err.details;
+          });
+      });
     }
 
     async function uploadFiles() {
@@ -119,10 +125,9 @@
       const output = document.getElementById("output");
 
       if (!location || !category || (category === 'OTHER' && !other)) {
-        output.textContent = '❗ Please fill all required fields.';
+        output.textContent = '❗ Please complete all fields.';
         return;
       }
-
       if (category === 'OTHER') category = other;
 
       const files = document.getElementById("filePicker").files;
@@ -131,29 +136,45 @@
         return;
       }
 
-      await gapi.auth2.getAuthInstance().signIn();
+      try {
+        await gapi.auth2.getAuthInstance().signIn();
+      } catch (e) {
+        output.textContent = '❌ Sign-in failed: ' + e.message;
+        return;
+      }
+
       const accessToken = gapi.auth.getToken().access_token;
-      output.textContent = 'Uploading...\n';
+      output.textContent = 'Uploading files...\n';
 
       for (const file of files) {
         const metadata = {
-          name: `${category}_${file.name}`,
+          name: `${location}_${category}_${file.name}`,
           mimeType: file.type,
-          parents: [FOLDER_ID]  // Upload inside specific Drive folder
+          parents: [FOLDER_ID]
         };
 
         const form = new FormData();
         form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
         form.append('file', file);
 
-        const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-          method: 'POST',
-          headers: new Headers({ Authorization: 'Bearer ' + accessToken }),
-          body: form
-        });
+        try {
+          const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+            method: 'POST',
+            headers: new Headers({ Authorization: 'Bearer ' + accessToken }),
+            body: form
+          });
 
-        const result = await res.json();
-        output.textContent += `✅ Uploaded: ${result.name}\n`;
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error.message || 'Upload failed');
+          }
+
+          const result = await res.json();
+          output.textContent += `✅ Uploaded: ${result.name}\n`;
+
+        } catch (err) {
+          output.textContent += `❌ Error uploading ${file.name}: ${err.message}\n`;
+        }
       }
     }
 
@@ -161,3 +182,4 @@
   </script>
 </body>
 </html>
+
