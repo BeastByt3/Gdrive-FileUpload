@@ -21,7 +21,7 @@
       margin-bottom: 15px;
       font-size: 16px;
     }
-    select, input[type="file"] {
+    select, input[type="file"], input[type="text"] {
       padding: 10px;
       border-radius: 8px;
       border: 1px solid #ccc;
@@ -97,8 +97,9 @@
 
   <script src="https://apis.google.com/js/api.js"></script>
   <script>
-    const CLIENT_ID = 'YOUR_CLIENT_ID_HERE';
+    const CLIENT_ID = '526441448305-4cr9uaualqc0lhifam4ldm3i9huarvjc.apps.googleusercontent.com';  // ← Replace this with your real OAuth 2.0 Client ID
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+    const FOLDER_ID = '1OowiNexHtFBRxjSAb50idW75hYEMAh4n';  // Your Drive folder ID
 
     function start() {
       gapi.load('client:auth2', () => {
@@ -137,7 +138,8 @@
       for (const file of files) {
         const metadata = {
           name: `${category}_${file.name}`,
-          mimeType: file.type
+          mimeType: file.type,
+          parents: [FOLDER_ID]  // Upload inside specific Drive folder
         };
 
         const form = new FormData();
