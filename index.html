@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      color: #333;
+    }
+    h2 {
+      text-align: center;
+    }
+    label, select, input[type="file"], button {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    select, input[type="file"] {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #output {
+      white-space: pre-wrap;
+      background: #f8f8f8;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <h2>📤 Upload Tool</h2>
+
+  <label for="location">Select City/Municipality:</label>
+  <select id="location" required>
+    <option value="">-- Select City/Municipality --</option>
+    <option>ALFONSO</option>
+    <option>AMADEO</option>
+    <option>BACOOR</option>
+    <option>CARMONA</option>
+    <option>CAVITE CITY</option>
+    <option>DASMARIÑAS</option>
+    <option>GEN. MARIANO ALVAREZ</option>
+    <option>GENERAL EMILIO AGUINALDO</option>
+    <option>GENERAL TRIAS</option>
+    <option>IMUS</option>
+    <option>INDANG</option>
+    <option>KAWIT</option>
+    <option>MAGALLANES</option>
+    <option>MARAGONDON</option>
+    <option>MENDEZ (MENDEZ-NUÑEZ)</option>
+    <option>NAIC</option>
+    <option>NOVELETA</option>
+    <option>ROSARIO</option>
+    <option>SILANG</option>
+    <option>TAGAYTAY CITY</option>
+    <option>TANZA</option>
+    <option>TERNATE</option>
+    <option>TRECE MARTIRES CITY (Capital)</option>
+  </select>
+
+  <label for="category">Select File Category:</label>
+  <select id="category" onchange="checkOther(this)">
+    <option value="">-- Select Category --</option>
+    <option>ENDORSEMENT</option>
+    <option>NATT ENDORSEMENT</option>
+    <option>C/MAC MINUTES</option>
+    <option value="OTHER">Other</option>
+  </select>
+
+  <input type="text" id="otherCategory" placeholder="Specify file category" style="display:none;" />
+
+  <label for="filePicker">Select Files:</label>
+  <input type="file" id="filePicker" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.pptx,.csv" />
+
+  <button onclick="uploadFiles()">Upload</button>
+
+  <div id="output">Waiting for upload...</div>
+
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script>
+    const CLIENT_ID = 'YOUR_CLIENT_ID_HERE';
+    const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+    function start() {
+      gapi.load('client:auth2', () => {
+        gapi.client.init({ clientId: CLIENT_ID, scope: SCOPES });
+      });
+    }
+
+    function checkOther(sel) {
+      document.getElementById('otherCategory').style.display =
+        sel.value === 'OTHER' ? 'block' : 'none';
+    }
+
+    async function uploadFiles() {
+      const location = document.getElementById("location").value;
+      let category = document.getElementById("category").value;
+      const other = document.getElementById("otherCategory").value.trim();
+      const output = document.getElementById("output");
+
+      if (!location || !category || (category === 'OTHER' && !other)) {
+        output.textContent = '❗ Please fill all required fields.';
+        return;
+      }
+
+      if (category === 'OTHER') category = other;
+
+      const files = document.getElementById("filePicker").files;
+      if (!files.length) {
+        output.textContent = '❗ No files selected.';
+        return;
+      }
+
+      await gapi.auth2.getAuthInstance().signIn();
+      const accessToken = gapi.auth.getToken().access_token;
+      output.textContent = 'Uploading...\n';
+
+      for (const file of files) {
+        const metadata = {
+          name: `${category}_${file.name}`,
+          mimeType: file.type
+        };
+
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', file);
+
+        const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+          method: 'POST',
+          headers: new Headers({ Authorization: 'Bearer ' + accessToken }),
+          body: form
+        });
+
+        const result = await res.json();
+        output.textContent += `✅ Uploaded: ${result.name}\n`;
+      }
+    }
+
+    start();
+  </script>
+</body>
+</html>
