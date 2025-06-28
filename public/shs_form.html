@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Senior High School Profiling Form</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f6f6f6;
+      margin: 0;
+      padding: 20px;
+    }
+    .form-container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #9b1c20;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    input[type="text"],
+    input[type="date"],
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #9b1c20;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #7e161a;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <h2>SENIOR HIGH SCHOOL PROFILING FORM</h2>
+
+    <form id="shsForm">
+      <div class="form-group">
+        <label>Region</label>
+        <select name="region" required>
+          <option value="">Select Region</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Province</label>
+        <select name="province" required>
+          <option value="">Select Province</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>City/Municipality</label>
+        <select name="city" required>
+          <option value="">Select City/Municipality</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>HH ID</label>
+        <input type="text" name="hh_id" required>
+      </div>
+
+      <div class="form-group">
+        <label>Last Name</label>
+        <input type="text" name="last_name" required>
+      </div>
+
+      <div class="form-group">
+        <label>First Name</label>
+        <input type="text" name="first_name" required>
+      </div>
+
+      <div class="form-group">
+        <label>Middle Name</label>
+        <input type="text" name="middle_name">
+      </div>
+
+      <div class="form-group">
+        <label>Extension Name</label>
+        <input type="text" name="extension_name">
+      </div>
+
+      <div class="form-group">
+        <label>Birthday</label>
+        <input type="date" name="birthday" required>
+      </div>
+
+      <div class="form-group">
+        <label>Sex</label>
+        <select name="sex" required>
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Civil Status</label>
+        <select name="civil_status" required>
+          <option value="">Select</option>
+          <option value="Single">Single</option>
+          <option value="Married">Married</option>
+          <option value="Separated">Separated</option>
+          <option value="Widowed">Widowed</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>IP Affiliation</label>
+        <input type="text" name="ip_affiliation" placeholder="Enter Non-IP if None">
+      </div>
+
+      <div class="form-group">
+        <label>Disability</label>
+        <select name="disability" required>
+          <option value="">Select</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Attending School</label>
+        <select name="attending_school" required>
+          <option value="">Select</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Grade Level</label>
+        <select name="grade_level" required>
+          <option value="">Select</option>
+          <option value="11">11</option>
+          <option value="12">12</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Track</label>
+        <select name="track" required>
+          <option value="">Select</option>
+          <option value="Academic">Academic</option>
+          <option value="Technical-Vocational">Technical-Vocational</option>
+          <option value="Sports">Sports</option>
+          <option value="Arts and Design">Arts and Design</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Strand</label>
+        <select name="strand" required>
+          <option value="">Select a track first</option>
+          <option value="STEM">STEM</option>
+          <option value="ABM">ABM</option>
+          <option value="HUMSS">HUMSS</option>
+          <option value="GAS">GAS</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Curriculum Exit</label>
+        <select name="curriculum_exit" required>
+          <option value="">Select</option>
+          <option value="Employment">Employment</option>
+          <option value="Entrepreneurship">Entrepreneurship</option>
+          <option value="Higher Education">Higher Education</option>
+          <option value="Middle-Level Skills Development">Middle-Level Skills Development</option>
+        </select>
+      </div>
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+
+</body>
+</html>
