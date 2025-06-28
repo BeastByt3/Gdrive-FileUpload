@@ -1,65 +1,82 @@
 const express = require('express');
-const cors = require('cors'); // Import the CORS middleware
+const cors = require('cors');
+const { GoogleAuth } = require('google-auth-library');
+const { google } = require('googleapis');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// === IMPORTANT: Use CORS to allow requests from your Firebase website ===
-app.use(cors()); 
+app.use(cors());
 app.use(express.json());
 
-// Initialize Gemini AI Client
-// You must set GEMINI_API_KEY in your Render environment variables.
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY environment variable not set.");
-}
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// === AI-POWERED ROUTE for the SHS Form ===
 app.post('/submit-shs', async (req, res) => {
   try {
     const studentData = req.body;
+    console.log('Received form data:', studentData);
 
-    // We removed the Firestore part since this server doesn't have Firebase Admin access.
-    // This server's only job is to call the AI.
+    const spreadsheetId = process.env.SPREADSHEET_ID;
+    const targetRange = 'Sheet1!A1'; // We will append to the first empty row of 'Sheet1'
 
-    const prompt = `
-        Analyze the following Senior High School student profile from the Philippines and generate a concise summary and a career path suggestion.
+    // --- Part 1: Save data to Google Sheets ---
+    try {
+      // --- NEW LOGGING ADDED HERE ---
+      console.log(`Preparing to write to Spreadsheet ID: ${spreadsheetId}`);
+      console.log(`Targeting range: ${targetRange}`);
+      
+      if (!spreadsheetId) {
+        throw new Error("SPREADSHEET_ID environment variable is not set.");
+      }
 
-        Student Profile:
-        - Name: ${studentData.firstName} ${studentData.lastName}
-        - Location: ${studentData.city}, ${studentData.province}
-        - Chosen Track: ${studentData.track}
-        - Chosen Strand: ${studentData.strand}
+      const auth = new GoogleAuth({
+        credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
+        scopes: 'https://www.googleapis.com/auth/spreadsheets',
+      });
+      const sheets = google.sheets({ version: 'v4', auth });
 
-        Tasks:
-        1.  **Profile Summary:** Write a 2-3 sentence summary of the student's profile.
-        2.  **Career Path Suggestions:** Based on their Track and Strand, suggest 3-5 potential college courses or jobs in the Philippines.
+      const newRow = [ new Date().toISOString(), studentData.hhId || '', studentData.lastName || '', studentData.firstName || '' /* ... and so on */ ];
+      
+      // --- NEW LOGGING ADDED HERE ---
+      console.log('Data prepared for new row:', newRow);
 
-        Format the entire output in clean Markdown.
-    `;
+      const response = await sheets.spreadsheets.values.append({
+        spreadsheetId: spreadsheetId,
+        range: targetRange,
+        valueInputOption: 'USER_ENTERED',
+        resource: {
+          values: [newRow],
+        },
+      });
 
+      // --- NEW LOGGING ADDED HERE ---
+      console.log('Successfully wrote to Google Sheet. Server response:', response.statusText);
+
+    } catch (sheetError) {
+      console.error('--- ERROR SAVING TO GOOGLE SHEETS ---', sheetError);
+    }
+
+    // --- Part 2: Call Gemini AI (This part is working well) ---
+    console.log('Proceeding to Gemini AI...');
+    const prompt = `Analyze the following Senior High School student profile...`;
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const aiProfile = response.text();
-
+    const aiProfile = (await result.response).text();
     console.log('Gemini Profile Generated successfully.');
 
-    // Send the AI-generated profile back to the browser
-    res.status(200).json({ 
-        message: 'AI summary generated successfully.',
-        aiProfile: aiProfile 
+    // --- Part 3: Send response back to browser ---
+    res.status(200).json({
+        message: 'Data saved and AI summary generated.',
+        aiProfile: aiProfile
     });
 
   } catch (error) {
-    console.error('Error in /submit-shs endpoint:', error);
+    console.error('--- CRITICAL ERROR in /submit-shs endpoint ---', error);
     res.status(500).send({ error: 'Failed to process student profile.' });
   }
 });
 
-// Health check route for the root URL
 app.get('/', (req, res) => {
   res.send('DSWD Case Management AI Server is running.');
 });
