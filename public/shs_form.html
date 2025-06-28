@@ -38,7 +38,6 @@
   <div class="main-content">
     <form id="shsForm">
         <h2>Senior High School Profiling Form</h2>
-
         <label for="region">Region</label>
         <select id="region" name="region" required>
             <option value="">Select Region</option>
@@ -81,14 +80,21 @@
         </select>
         
         <button type="submit" id="submitButton">Submit and Generate AI Profile</button>
-        
         <div id="aiResult"></div>
     </form>
   </div>
   
   <script>
-    // --- Dependent Dropdown Logic ---
-    const cityData = { Batangas: ["Batangas City", "Lipa City", "Tanauan City"], Cavite: ["Tagaytay City", "Imus", "Bacoor"], Laguna: ["San Pablo", "Calamba", "Sta. Rosa"], Quezon: ["Lucena City", "Tayabas", "Candelaria"], Rizal: ["Antipolo", "Binangonan", "Cainta"] };
+    // === THIS IS THE ONLY PART THAT HAS CHANGED ===
+    // It now contains the complete list of cities and municipalities.
+    const cityData = {
+        Batangas: ["Agoncillo", "Alitagtag", "Balayan", "Balete", "Batangas City", "Bauan", "Calaca", "Calatagan", "Cuenca", "Ibaan", "Laurel", "Lemery", "Lian", "Lipa", "Lobo", "Mabini", "Malvar", "Mataasnakahoy", "Nasugbu", "Padre Garcia", "Rosario", "San Jose", "San Juan", "San Luis", "San Nicolas", "San Pascual", "Santa Teresita", "Santo Tomas", "Taal", "Talisay", "Tanauan", "Taysan", "Tingloy", "Tuy"],
+        Cavite: ["Alfonso", "Amadeo", "Bacoor", "Carmona", "Cavite City", "Dasmariñas", "General Emilio Aguinaldo", "General Mariano Alvarez", "General Trias", "Imus", "Indang", "Kawit", "Magallanes", "Maragondon", "Mendez", "Naic", "Noveleta", "Rosario", "Silang", "Tagaytay", "Tanza", "Ternate", "Trece Martires"],
+        Laguna: ["Alaminos", "Bay", "Biñan", "Cabuyao", "Calamba", "Calauan", "Cavinti", "Famy", "Kalayaan", "Liliw", "Los Baños", "Luisiana", "Lumban", "Mabitac", "Magdalena", "Majayjay", "Nagcarlan", "Paete", "Pagsanjan", "Pakil", "Pangil", "Pila", "Rizal", "San Pablo", "San Pedro", "Santa Cruz", "Santa Maria", "Santa Rosa", "Siniloan", "Victoria"],
+        Quezon: ["Agdangan", "Alabat", "Atimonan", "Buenavista", "Burdeos", "Calauag", "Candelaria", "Catanauan", "Dolores", "General Luna", "General Nakar", "Guinayangan", "Gumaca", "Infanta", "Jomalig", "Lopez", "Lucban", "Lucena", "Macalelon", "Mauban", "Mulanay", "Padre Burgos", "Pagbilao", "Panukulan", "Patnanungan", "Perez", "Pitogo", "Plaridel", "Polillo", "Quezon", "Real", "Sampaloc", "San Andres", "San Antonio", "San Francisco", "San Narciso", "Sariaya", "Tagkawayan", "Tayabas", "Tiaong", "Unisan"],
+        Rizal: ["Angono", "Antipolo", "Baras", "Binangonan", "Cainta", "Cardona", "Jalajala", "Morong", "Pililla", "Rodriguez", "San Mateo", "Tanay", "Taytay", "Teresa"]
+    };
+
     document.getElementById('province').addEventListener('change', function() {
       const cities = cityData[this.value] || [];
       const citySelect = document.getElementById('city');
@@ -100,6 +106,7 @@
         citySelect.appendChild(option);
       });
     });
+
     document.getElementById('track').addEventListener('change', function() {
         const strand = document.getElementById('strand');
         strand.innerHTML = '<option value="">Select Strand</option>';
@@ -120,23 +127,18 @@
         }
     });
 
-    // --- Form Submission Logic ---
+    // --- Form Submission Logic (unchanged) ---
     document.getElementById('shsForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      
       const submitButton = document.getElementById('submitButton');
       const aiResultDiv = document.getElementById('aiResult');
       const formData = new FormData(this);
       const data = Object.fromEntries(formData.entries());
-
       submitButton.disabled = true;
       submitButton.textContent = 'Processing... (Server may take up to a minute to wake up)';
       aiResultDiv.style.display = 'block';
       aiResultDiv.innerHTML = '🧠 Contacting AI server... Please be patient.';
-
-      // The public URL of your Render server
       const endpoint = 'https://casemanagement-server.onrender.com/submit-shs';
-
       fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -144,10 +146,7 @@
       })
       .then(response => {
         if (!response.ok) {
-          // Try to get error message from server if possible
-          return response.text().then(text => { 
-            throw new Error(`Server error: ${response.statusText} - ${text}`) 
-          });
+          return response.text().then(text => { throw new Error(`Server error: ${response.statusText} - ${text}`) });
         }
         return response.json();
       })
