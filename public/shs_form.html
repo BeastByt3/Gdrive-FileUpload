@@ -1,53 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Senior High School Profiling Form</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f6f6f6;
-      margin: 0;
+      margin: 20px;
+      background-color: #f9f9f9;
+    }
+    form {
+      background: #fff;
       padding: 20px;
-    }
-    .form-container {
-      max-width: 800px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-    }
-    h2 {
-      text-align: center;
-      color: #9b1c20;
-    }
-    .form-group {
-      margin-bottom: 15px;
+      border-radius: 8px;
+      max-width: 600px;
+      margin: 0 auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     label {
       display: block;
-      font-weight: bold;
-      margin-bottom: 6px;
+      margin-top: 10px;
     }
-    input[type="text"],
-    input[type="date"],
-    select {
+    input, select {
       width: 100%;
       padding: 10px;
-      border: 1px solid #ccc;
+      margin-top: 5px;
       border-radius: 5px;
+      border: 1px solid #ccc;
     }
     button {
       background-color: #9b1c20;
-      color: white;
-      padding: 12px 20px;
+      color: #fff;
+      padding: 12px;
       border: none;
       border-radius: 5px;
-      font-size: 16px;
+      margin-top: 20px;
       cursor: pointer;
-      width: 100%;
+      font-weight: bold;
     }
     button:hover {
       background-color: #7e161a;
@@ -56,149 +46,142 @@
 </head>
 <body>
 
-  <div class="form-container">
-    <h2>SENIOR HIGH SCHOOL PROFILING FORM</h2>
+  <form id="shsForm">
+    <h2>Senior High School Profiling Form</h2>
 
-    <form id="shsForm">
-      <div class="form-group">
-        <label>Region</label>
-        <select name="region" required>
-          <option value="">Select Region</option>
-        </select>
-      </div>
+    <label>Region</label>
+    <select id="region" required>
+      <option value="">Select Region</option>
+      <option value="IV-A">Region IV-A</option>
+    </select>
 
-      <div class="form-group">
-        <label>Province</label>
-        <select name="province" required>
-          <option value="">Select Province</option>
-        </select>
-      </div>
+    <label>Province</label>
+    <select id="province" required>
+      <option value="">Select Province</option>
+      <option value="Batangas">Batangas</option>
+      <option value="Cavite">Cavite</option>
+      <option value="Laguna">Laguna</option>
+      <option value="Quezon">Quezon</option>
+      <option value="Rizal">Rizal</option>
+    </select>
 
-      <div class="form-group">
-        <label>City/Municipality</label>
-        <select name="city" required>
-          <option value="">Select City/Municipality</option>
-        </select>
-      </div>
+    <label>City/Municipality</label>
+    <select id="city" required>
+      <option value="">Select City/Municipality</option>
+    </select>
 
-      <div class="form-group">
-        <label>HH ID</label>
-        <input type="text" name="hh_id" required>
-      </div>
+    <label>HH ID</label><input type="text" required>
+    <label>Last Name</label><input type="text" required>
+    <label>First Name</label><input type="text" required>
+    <label>Middle Name</label><input type="text">
+    <label>Extension Name</label><input type="text">
 
-      <div class="form-group">
-        <label>Last Name</label>
-        <input type="text" name="last_name" required>
-      </div>
+    <label>Birthday</label><input type="date" required>
 
-      <div class="form-group">
-        <label>First Name</label>
-        <input type="text" name="first_name" required>
-      </div>
+    <label>Sex</label>
+    <select required>
+      <option value="">Select</option>
+      <option>Male</option>
+      <option>Female</option>
+    </select>
 
-      <div class="form-group">
-        <label>Middle Name</label>
-        <input type="text" name="middle_name">
-      </div>
+    <label>Civil Status</label>
+    <select required>
+      <option value="">Select</option>
+      <option>Single</option>
+      <option>Married</option>
+      <option>Widowed</option>
+      <option>Separated</option>
+    </select>
 
-      <div class="form-group">
-        <label>Extension Name</label>
-        <input type="text" name="extension_name">
-      </div>
+    <label>IP Affiliation</label><input type="text" placeholder="Enter Non-IP if None">
 
-      <div class="form-group">
-        <label>Birthday</label>
-        <input type="date" name="birthday" required>
-      </div>
+    <label>Disability</label>
+    <select required>
+      <option value="">Select</option>
+      <option>Yes</option>
+      <option>No</option>
+    </select>
 
-      <div class="form-group">
-        <label>Sex</label>
-        <select name="sex" required>
-          <option value="">Select</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-        </select>
-      </div>
+    <label>Attending School</label>
+    <select required>
+      <option value="">Select</option>
+      <option>Yes</option>
+      <option>No</option>
+    </select>
 
-      <div class="form-group">
-        <label>Civil Status</label>
-        <select name="civil_status" required>
-          <option value="">Select</option>
-          <option value="Single">Single</option>
-          <option value="Married">Married</option>
-          <option value="Separated">Separated</option>
-          <option value="Widowed">Widowed</option>
-        </select>
-      </div>
+    <label>Grade Level</label><input type="text" required>
 
-      <div class="form-group">
-        <label>IP Affiliation</label>
-        <input type="text" name="ip_affiliation" placeholder="Enter Non-IP if None">
-      </div>
+    <label>Track</label>
+    <select id="track" required>
+      <option value="">Select</option>
+      <option>Academic</option>
+      <option>Technical-Vocational-Livelihood</option>
+    </select>
 
-      <div class="form-group">
-        <label>Disability</label>
-        <select name="disability" required>
-          <option value="">Select</option>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select>
-      </div>
+    <label>Strand</label>
+    <select id="strand" required>
+      <option value="">Select a track first</option>
+    </select>
 
-      <div class="form-group">
-        <label>Attending School</label>
-        <select name="attending_school" required>
-          <option value="">Select</option>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select>
-      </div>
+    <label>Curriculum Exit</label>
+    <select required>
+      <option value="">Select</option>
+      <option>Employment</option>
+      <option>Entrepreneurship</option>
+      <option>Middle-level Skills Development</option>
+      <option>Higher Education</option>
+    </select>
 
-      <div class="form-group">
-        <label>Grade Level</label>
-        <select name="grade_level" required>
-          <option value="">Select</option>
-          <option value="11">11</option>
-          <option value="12">12</option>
-        </select>
-      </div>
+    <button type="submit">Submit</button>
+  </form>
 
-      <div class="form-group">
-        <label>Track</label>
-        <select name="track" required>
-          <option value="">Select</option>
-          <option value="Academic">Academic</option>
-          <option value="Technical-Vocational">Technical-Vocational</option>
-          <option value="Sports">Sports</option>
-          <option value="Arts and Design">Arts and Design</option>
-        </select>
-      </div>
+  <script>
+    const cityData = {
+      Batangas: ["Batangas City", "Lipa City", "Tanauan City"],
+      Cavite: ["Tagaytay City", "Imus", "Bacoor"],
+      Laguna: ["San Pablo", "Calamba", "Sta. Rosa"],
+      Quezon: ["Lucena City", "Tayabas", "Candelaria"],
+      Rizal: ["Antipolo", "Binangonan", "Cainta"]
+    };
 
-      <div class="form-group">
-        <label>Strand</label>
-        <select name="strand" required>
-          <option value="">Select a track first</option>
-          <option value="STEM">STEM</option>
-          <option value="ABM">ABM</option>
-          <option value="HUMSS">HUMSS</option>
-          <option value="GAS">GAS</option>
-        </select>
-      </div>
+    document.getElementById('province').addEventListener('change', function() {
+      const province = this.value;
+      const cities = cityData[province] || [];
+      const citySelect = document.getElementById('city');
+      citySelect.innerHTML = '<option value="">Select City/Municipality</option>';
+      cities.forEach(city => {
+        const option = document.createElement('option');
+        option.textContent = city;
+        citySelect.appendChild(option);
+      });
+    });
 
-      <div class="form-group">
-        <label>Curriculum Exit</label>
-        <select name="curriculum_exit" required>
-          <option value="">Select</option>
-          <option value="Employment">Employment</option>
-          <option value="Entrepreneurship">Entrepreneurship</option>
-          <option value="Higher Education">Higher Education</option>
-          <option value="Middle-Level Skills Development">Middle-Level Skills Development</option>
-        </select>
-      </div>
+    document.getElementById('track').addEventListener('change', function() {
+      const strand = document.getElementById('strand');
+      strand.innerHTML = '<option value="">Select a track first</option>';
+      if (this.value === 'Academic') {
+        ['STEM', 'ABM', 'HUMSS', 'GAS'].forEach(s => {
+          const option = document.createElement('option');
+          option.text = s;
+          strand.appendChild(option);
+        });
+      }
+    });
 
-      <button type="submit">Submit</button>
-    </form>
-  </div>
+    document.getElementById('shsForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const data = {};
+      formData.forEach((value, key) => data[key] = value);
 
+      fetch('https://casemanagement-server.onrender.com/submit-shs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.ok ? alert('Form submitted successfully!') : alert('Error submitting form.'));
+    });
+  </script>
 </body>
 </html>
