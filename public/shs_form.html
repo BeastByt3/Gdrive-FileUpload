@@ -1,64 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Senior High School Profiling Form</title>
+  <title>SHS Form | DSWD CM Tool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f9f9f9; }
-    form { background: #fff; padding: 20px; border-radius: 8px; max-width: 600px; margin: 0 auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    label { display: block; margin-top: 10px; font-weight: bold; }
+    /* --- The CSS for the new sidebar layout --- */
+    body { font-family: 'Outfit', sans-serif; background-color: #f9f9f9; margin: 0; color: #333; }
+    .sidebar { margin: 0; padding: 0; width: 250px; background-color: #9b1c20; position: fixed; height: 100%; overflow: auto; }
+    .sidebar .header { padding: 22px 16px; background-color: #7e161a; color: white; font-size: 20px; font-weight: 700; text-align: center; }
+    .sidebar a { display: block; color: white; padding: 16px; text-decoration: none; font-weight: 600; border-bottom: 1px solid #a83337; }
+    .sidebar a.active { background-color: #ffc107; color: #333; }
+    .sidebar a:hover:not(.active) { background-color: #a83337; }
+    .main-content { margin-left: 265px; padding: 20px; }
+    form { background: #fff; padding: 30px; border-radius: 8px; max-width: 800px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h2 { color: #9b1c20; }
+    label { display: block; margin-top: 15px; font-weight: 600; }
     input, select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
     button { background-color: #9b1c20; color: #fff; padding: 12px; border: none; border-radius: 5px; margin-top: 20px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
     button:hover { background-color: #7e161a; }
     button:disabled { background-color: #ccc; cursor: not-allowed; }
-    /* --- NEW STYLES --- */
     #aiResult { margin-top: 20px; background-color: #e9f5ff; border: 1px solid #bce8f1; border-radius: 8px; padding: 15px; white-space: pre-wrap; display: none; }
+    @media screen and (max-width: 700px) { .sidebar { width: 100%; height: auto; position: relative; } .sidebar a { float: left; } .main-content { margin-left: 0; } }
   </style>
 </head>
 <body>
 
-  <form id="shsForm">
-    <h2>Senior High School Profiling Form</h2>
+  <div class="sidebar">
+    <div class="header">DSWD CM Tool</div>
+    <a href="index.html">🏠 Dashboard</a>
+    <a href="forms.html" class="active">📝 Fill Out a Form</a>
+    <a href="upload.html">📤 Upload Files</a>
+    <a href="login.html">🔒 Admin Login</a>
+  </div>
 
-    <label for="region">Region</label>
-    <select id="region" name="region" required>
-        <option value="">Select Region</option>
-        <option value="IV-A">Region IV-A</option>
-    </select>
-    <label for="province">Province</label>
-    <select id="province" name="province" required>
-        <option value="">Select Province</option>
-        <option value="Batangas">Batangas</option>
-        <option value="Cavite">Cavite</option>
-        <option value="Laguna">Laguna</option>
-        <option value="Quezon">Quezon</option>
-        <option value="Rizal">Rizal</option>
-    </select>
-    <label for="city">City/Municipality</label>
-    <select id="city" name="city" required>
-        <option value="">Select City/Municipality</option>
-    </select>
-    <label for="lastName">Last Name</label><input type="text" id="lastName" name="lastName" required>
-    <label for="firstName">First Name</label><input type="text" id="firstName" name="firstName" required>
-    <label for="track">Track</label>
-    <select id="track" name="track" required>
-        <option value="">Select</option>
-        <option>Academic</option>
-        <option>Technical-Vocational-Livelihood</option>
-    </select>
-    <label for="strand">Strand</label>
-    <select id="strand" name="strand" required>
-        <option value="">Select a track first</option>
-    </select>
-    
-    <button type="submit" id="submitButton">Submit and Generate AI Profile</button>
-    
-    <div id="aiResult"></div>
-  </form>
+  <div class="main-content">
+    <form id="shsForm">
+        <h2>Senior High School Profiling Form</h2>
 
+        <label for="region">Region</label>
+        <select id="region" name="region" required>
+            <option value="">Select Region</option>
+            <option value="IV-A">Region IV-A</option>
+        </select>
+        <label for="province">Province</label>
+        <select id="province" name="province" required>
+            <option value="">Select Province</option>
+            <option value="Batangas">Batangas</option>
+            <option value="Cavite">Cavite</option>
+            <option value="Laguna">Laguna</option>
+            <option value="Quezon">Quezon</option>
+            <option value="Rizal">Rizal</option>
+        </select>
+        <label for="city">City/Municipality</label>
+        <select id="city" name="city" required>
+            <option value="">Select City/Municipality</option>
+        </select>
+        <label for="hhId">HH ID</label><input type="text" id="hhId" name="hhId" required>
+        <label for="lastName">Last Name</label><input type="text" id="lastName" name="lastName" required>
+        <label for="firstName">First Name</label><input type="text" id="firstName" name="firstName" required>
+        <label for="middleName">Middle Name</label><input type="text" id="middleName" name="middleName">
+        <label for="extName">Extension Name</label><input type="text" id="extName" name="extName">
+        <label for="birthday">Birthday</label><input type="date" id="birthday" name="birthday" required>
+        <label for="sex">Sex</label>
+        <select id="sex" name="sex" required>
+            <option value="">Select</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
+        <label for="track">Track</label>
+        <select id="track" name="track" required>
+            <option value="">Select</option>
+            <option>Academic</option>
+            <option>Technical-Vocational-Livelihood</option>
+        </select>
+        <label for="strand">Strand</label>
+        <select id="strand" name="strand" required>
+            <option value="">Select a track first</option>
+        </select>
+        
+        <button type="submit" id="submitButton">Submit and Generate AI Profile</button>
+        
+        <div id="aiResult"></div>
+    </form>
+  </div>
+  
   <script>
-    // --- YOUR EXISTING DROPDOWN LOGIC (UNCHANGED) ---
+    // --- Dependent Dropdown Logic ---
     const cityData = { Batangas: ["Batangas City", "Lipa City", "Tanauan City"], Cavite: ["Tagaytay City", "Imus", "Bacoor"], Laguna: ["San Pablo", "Calamba", "Sta. Rosa"], Quezon: ["Lucena City", "Tayabas", "Candelaria"], Rizal: ["Antipolo", "Binangonan", "Cainta"] };
     document.getElementById('province').addEventListener('change', function() {
       const cities = cityData[this.value] || [];
@@ -67,7 +96,7 @@
       cities.forEach(city => {
         const option = document.createElement('option');
         option.textContent = city;
-        option.value = city; // Make sure value is set
+        option.value = city;
         citySelect.appendChild(option);
       });
     });
@@ -91,23 +120,21 @@
         }
     });
 
-    // --- NEW SUBMISSION LOGIC ---
+    // --- Form Submission Logic ---
     document.getElementById('shsForm').addEventListener('submit', function(e) {
       e.preventDefault();
       
       const submitButton = document.getElementById('submitButton');
       const aiResultDiv = document.getElementById('aiResult');
       const formData = new FormData(this);
-      // Important: Use Object.fromEntries to convert FormData to a plain object
       const data = Object.fromEntries(formData.entries());
 
-      // Disable button and show loading message
       submitButton.disabled = true;
-      submitButton.textContent = 'Processing...';
+      submitButton.textContent = 'Processing... (Server may take up to a minute to wake up)';
       aiResultDiv.style.display = 'block';
-      aiResultDiv.innerHTML = '🧠 Generating student profile with Gemini AI...';
+      aiResultDiv.innerHTML = '🧠 Contacting AI server... Please be patient.';
 
-      // This is the endpoint on your Render server we will create next
+      // The public URL of your Render server
       const endpoint = 'https://casemanagement-server.onrender.com/submit-shs';
 
       fetch(endpoint, {
@@ -116,21 +143,27 @@
         body: JSON.stringify(data)
       })
       .then(response => {
-        if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+        if (!response.ok) {
+          // Try to get error message from server if possible
+          return response.text().then(text => { 
+            throw new Error(`Server error: ${response.statusText} - ${text}`) 
+          });
+        }
         return response.json();
       })
       .then(result => {
-        // Display the AI summary received from the server
         aiResultDiv.innerHTML = `<strong>✅ Success! AI Student Profile:</strong><hr>${result.aiProfile}`;
-        submitButton.textContent = 'Submitted Successfully!';
+        submitButton.disabled = false;
+        submitButton.textContent = 'Submit and Generate AI Profile';
       })
       .catch(error => {
         console.error('Error:', error);
-        aiResultDiv.innerHTML = '❌ Error submitting form or getting AI profile. Please check the server logs.';
+        aiResultDiv.innerHTML = '❌ Error submitting form. The server might be asleep or there is an issue. Please try again in a minute. Check the console for more details (Press F12).';
         submitButton.disabled = false;
         submitButton.textContent = 'Submit and Generate AI Profile';
       });
     });
   </script>
+
 </body>
 </html>
