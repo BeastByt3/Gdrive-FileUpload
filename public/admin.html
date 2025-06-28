@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel | DSWD CM Tool</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -41,12 +42,6 @@
     .section {
       margin-bottom: 40px;
     }
-    .card {
-      background-color: #f5f5f5;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 6px;
-    }
     .form-group {
       margin-bottom: 15px;
     }
@@ -55,45 +50,38 @@
       display: block;
       margin-bottom: 5px;
     }
-    input, select, textarea, button {
-      width: 100%;
+    input, button {
       padding: 10px;
       font-size: 14px;
       border: 1px solid #ccc;
       border-radius: 5px;
       box-sizing: border-box;
     }
+    input[type="text"] {
+      width: 70%;
+    }
     button {
       background-color: var(--primary-color);
       color: white;
       cursor: pointer;
       font-weight: bold;
-      transition: background-color 0.3s;
+      margin-top: 5px;
     }
     button:hover {
       background-color: #7e161a;
     }
-    .inline-inputs input {
-      width: calc(100% - 50px);
-      display: inline-block;
+    ul {
+      list-style: none;
+      padding: 0;
     }
-    .inline-inputs button {
-      width: 40px;
-      margin-left: 5px;
-      display: inline-block;
+    ul li {
+      padding: 5px 0;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    table th, table td {
-      padding: 8px;
-      border: 1px solid #ddd;
-      text-align: left;
-    }
-    .actions button {
-      margin-right: 5px;
+    .remove-btn {
+      background-color: #ccc;
+      color: #333;
+      margin-left: 10px;
+      font-size: 12px;
     }
   </style>
 </head>
@@ -104,94 +92,104 @@
 
   <div class="container">
     <div class="section">
-      <h2>📊 Site Status Overview</h2>
-      <div class="card">
-        <p><strong>Total Uploads:</strong> <span id="totalUploads">Loading...</span></p>
-        <p><strong>Total Form Submissions:</strong> <span id="totalSubmissions">Loading...</span></p>
-        <p><strong>Top Cities by Uploads:</strong></p>
-        <ul id="topCitiesUploads"></ul>
-        <p><strong>Top Cities by Form Submissions:</strong></p>
-        <ul id="topCitiesForms"></ul>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>📄 Manage Forms</h2>
-      <button onclick="createForm()">➕ Create New Form</button>
-      <div id="formList"></div>
-    </div>
-
-    <div class="section">
       <h2>📁 Manage Upload File Types</h2>
-      <form id="fileSettingsForm">
-        <div class="form-group">
-          <label>City/Municipality</label>
-          <div id="cityFields"></div>
-          <button type="button" onclick="addCityField()">➕ Add City</button>
-        </div>
-        <div class="form-group">
-          <label>File Types</label>
-          <div id="fileTypeFields"></div>
-          <button type="button" onclick="addFileTypeField()">➕ Add File Type</button>
-        </div>
-        <div class="form-group">
-          <label for="driveFolderId">Google Drive Folder ID</label>
-          <input type="text" id="driveFolderId" placeholder="Enter Google Drive Folder ID">
-        </div>
-        <button type="submit">💾 Save Upload Settings</button>
-      </form>
+      <div class="form-group">
+        <label>City/Municipality</label>
+        <input type="text" id="cityInput" placeholder="Enter City or Municipality">
+        <button onclick="addCity()">Add City</button>
+        <ul id="cityList"></ul>
+      </div>
+
+      <div class="form-group">
+        <label>File Types</label>
+        <input type="text" id="fileTypeInput" placeholder="Enter File Type">
+        <button onclick="addFileType()">Add File Type</button>
+        <ul id="fileTypeList"></ul>
+      </div>
+
+      <div class="form-group">
+        <label>Google Drive Folder ID</label>
+        <input type="text" id="driveFolderId" placeholder="Enter Google Drive Folder ID">
+      </div>
+
+      <button onclick="saveSettings()">💾 Save Upload Settings</button>
     </div>
   </div>
 
   <script>
-    function createForm() {
-      alert("Form builder will launch here (to be implemented).");
+    let cities = [];
+    let fileTypes = [];
+
+    function addCity() {
+      const input = document.getElementById("cityInput");
+      const value = input.value.trim();
+      if (value && !cities.includes(value)) {
+        cities.push(value);
+        updateList("cityList", cities, "city");
+        input.value = "";
+      }
     }
 
-    function addCityField(value = "") {
-      const container = document.getElementById("cityFields");
-      const div = document.createElement("div");
-      div.className = "inline-inputs";
-      div.innerHTML = `<input type="text" value="${value}" /><button type="button" onclick="this.parentNode.remove()">❌</button>`;
-      container.appendChild(div);
+    function addFileType() {
+      const input = document.getElementById("fileTypeInput");
+      const value = input.value.trim();
+      if (value && !fileTypes.includes(value)) {
+        fileTypes.push(value);
+        updateList("fileTypeList", fileTypes, "file");
+        input.value = "";
+      }
     }
 
-    function addFileTypeField(value = "") {
-      const container = document.getElementById("fileTypeFields");
-      const div = document.createElement("div");
-      div.className = "inline-inputs";
-      div.innerHTML = `<input type="text" value="${value}" /><button type="button" onclick="this.parentNode.remove()">❌</button>`;
-      container.appendChild(div);
+    function removeItem(type, index) {
+      if (type === "city") cities.splice(index, 1);
+      else fileTypes.splice(index, 1);
+      updateList(type === "city" ? "cityList" : "fileTypeList", type === "city" ? cities : fileTypes, type);
     }
 
-    document.getElementById("fileSettingsForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const cities = Array.from(document.querySelectorAll("#cityFields input")).map(i => i.value.trim()).filter(v => v);
-      const fileTypes = Array.from(document.querySelectorAll("#fileTypeFields input")).map(i => i.value.trim()).filter(v => v);
+    function updateList(listId, items, type) {
+      const list = document.getElementById(listId);
+      list.innerHTML = "";
+      items.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        const btn = document.createElement("button");
+        btn.textContent = "✖";
+        btn.className = "remove-btn";
+        btn.onclick = () => removeItem(type, index);
+        li.appendChild(btn);
+        list.appendChild(li);
+      });
+    }
+
+    function saveSettings() {
       const folderId = document.getElementById("driveFolderId").value.trim();
-
-      const settings = {
-        cities,
-        fileTypes,
-        driveFolderId: folderId
-      };
-
       fetch("https://casemanagement-server.onrender.com/save-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings)
+        body: JSON.stringify({
+          cities,
+          fileTypes,
+          driveFolderId: folderId
+        })
       })
-      .then(res => res.ok ? alert("Settings saved successfully") : alert("Error saving settings"));
-    });
+      .then(res => res.ok ? alert("Settings saved successfully!") : alert("Error saving settings"));
+    }
 
-    // Initial load of fields from backend (optional)
-    fetch("https://casemanagement-server.onrender.com/get-settings")
-      .then(res => res.json())
-      .then(data => {
-        data.cities?.forEach(c => addCityField(c));
-        data.fileTypes?.forEach(f => addFileTypeField(f));
-        if (data.driveFolderId) document.getElementById("driveFolderId").value = data.driveFolderId;
-      });
+    async function loadSettings() {
+      try {
+        const res = await fetch("https://casemanagement-server.onrender.com/get-settings");
+        const data = await res.json();
+        cities = data.cities || [];
+        fileTypes = data.fileTypes || [];
+        document.getElementById("driveFolderId").value = data.driveFolderId || "";
+        updateList("cityList", cities, "city");
+        updateList("fileTypeList", fileTypes, "file");
+      } catch (e) {
+        console.error("Failed to load settings:", e);
+      }
+    }
+
+    window.onload = loadSettings;
   </script>
 </body>
 </html>
