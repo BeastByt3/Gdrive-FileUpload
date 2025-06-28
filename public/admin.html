@@ -73,6 +73,15 @@
     button:hover {
       background-color: #7e161a;
     }
+    .inline-inputs input {
+      width: calc(100% - 50px);
+      display: inline-block;
+    }
+    .inline-inputs button {
+      width: 40px;
+      margin-left: 5px;
+      display: inline-block;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -85,14 +94,6 @@
     }
     .actions button {
       margin-right: 5px;
-    }
-    .multi-entry {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .multi-entry input {
-      flex: 1;
     }
   </style>
 </head>
@@ -125,19 +126,19 @@
       <form id="fileSettingsForm">
         <div class="form-group">
           <label>City/Municipality</label>
-          <div id="citiesContainer"></div>
-          <button type="button" onclick="addCity()">+ Add City</button>
+          <div id="cityFields"></div>
+          <button type="button" onclick="addCityField()">➕ Add City</button>
         </div>
         <div class="form-group">
           <label>File Types</label>
-          <div id="fileTypesContainer"></div>
-          <button type="button" onclick="addFileType()">+ Add File Type</button>
+          <div id="fileTypeFields"></div>
+          <button type="button" onclick="addFileTypeField()">➕ Add File Type</button>
         </div>
         <div class="form-group">
           <label for="driveFolderId">Google Drive Folder ID</label>
           <input type="text" id="driveFolderId" placeholder="Enter Google Drive Folder ID">
         </div>
-        <button type="submit">📏 Save Upload Settings</button>
+        <button type="submit">💾 Save Upload Settings</button>
       </form>
     </div>
   </div>
@@ -147,31 +148,50 @@
       alert("Form builder will launch here (to be implemented).");
     }
 
-    function addCity(value = '') {
-      const container = document.getElementById("citiesContainer");
+    function addCityField(value = "") {
+      const container = document.getElementById("cityFields");
       const div = document.createElement("div");
-      div.classList.add("multi-entry");
-      div.innerHTML = `<input type="text" value="${value}" placeholder="City/Municipality"><button type="button" onclick="this.parentElement.remove()">Remove</button>`;
+      div.className = "inline-inputs";
+      div.innerHTML = `<input type="text" value="${value}" /><button type="button" onclick="this.parentNode.remove()">❌</button>`;
       container.appendChild(div);
     }
 
-    function addFileType(value = '') {
-      const container = document.getElementById("fileTypesContainer");
+    function addFileTypeField(value = "") {
+      const container = document.getElementById("fileTypeFields");
       const div = document.createElement("div");
-      div.classList.add("multi-entry");
-      div.innerHTML = `<input type="text" value="${value}" placeholder="File Type"><button type="button" onclick="this.parentElement.remove()">Remove</button>`;
+      div.className = "inline-inputs";
+      div.innerHTML = `<input type="text" value="${value}" /><button type="button" onclick="this.parentNode.remove()">❌</button>`;
       container.appendChild(div);
     }
 
     document.getElementById("fileSettingsForm").addEventListener("submit", function(e) {
       e.preventDefault();
-
-      const cities = Array.from(document.querySelectorAll("#citiesContainer input"))
-                          .map(input => input.value.trim()).filter(Boolean);
-      const fileTypes = Array.from(document.querySelectorAll("#fileTypesContainer input"))
-                             .map(input => input.value.trim()).filter(Boolean);
+      const cities = Array.from(document.querySelectorAll("#cityFields input")).map(i => i.value.trim()).filter(v => v);
+      const fileTypes = Array.from(document.querySelectorAll("#fileTypeFields input")).map(i => i.value.trim()).filter(v => v);
       const folderId = document.getElementById("driveFolderId").value.trim();
 
-      const settings = { cities, fileTypes, driveFolderId: folderId };
+      const settings = {
+        cities,
+        fileTypes,
+        driveFolderId: folderId
+      };
 
       fetch("https://casemanagement-server.onrender.com/save-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings)
+      })
+      .then(res => res.ok ? alert("Settings saved successfully") : alert("Error saving settings"));
+    });
+
+    // Initial load of fields from backend (optional)
+    fetch("https://casemanagement-server.onrender.com/get-settings")
+      .then(res => res.json())
+      .then(data => {
+        data.cities?.forEach(c => addCityField(c));
+        data.fileTypes?.forEach(f => addFileTypeField(f));
+        if (data.driveFolderId) document.getElementById("driveFolderId").value = data.driveFolderId;
+      });
+  </script>
+</body>
+</html>
