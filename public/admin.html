@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | DSWD CM Tool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    :root {
+      --primary-color: #9b1c20;
+      --secondary-color: #f9f9f9;
+      --accent-color: #ffc107;
+      --text-color: #333;
+    }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--secondary-color);
+      margin: 0;
+      padding: 0;
+      color: var(--text-color);
+    }
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: var(--primary-color);
+      margin-bottom: 10px;
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+    .card {
+      background-color: #f5f5f5;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 6px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 5px;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #7e161a;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table th, table td {
+      padding: 8px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    .actions button {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    🛠️ Admin Panel - DSWD Case Management Tool
+  </header>
+
+  <div class="container">
+    <div class="section">
+      <h2>📊 Site Status Overview</h2>
+      <div class="card">
+        <p><strong>Total Uploads:</strong> <span id="totalUploads">Loading...</span></p>
+        <p><strong>Total Form Submissions:</strong> <span id="totalSubmissions">Loading...</span></p>
+        <p><strong>Top Cities by Uploads:</strong></p>
+        <ul id="topCitiesUploads"></ul>
+        <p><strong>Top Cities by Form Submissions:</strong></p>
+        <ul id="topCitiesForms"></ul>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📄 Manage Forms</h2>
+      <button onclick="createForm()">➕ Create New Form</button>
+      <div id="formList"></div>
+    </div>
+
+    <div class="section">
+      <h2>📁 Manage Upload Settings</h2>
+      <form id="fileSettingsForm">
+        <div class="form-group">
+          <label for="cities">City/Municipality</label>
+          <textarea id="cities" rows="3" placeholder="e.g. TAGAYTAY CITY\nIMUS\nBACOOR"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="fileTypes">File Types</label>
+          <textarea id="fileTypes" rows="3" placeholder="e.g. ENDORSEMENT\nNATT ENDORSEMENT\nOTHER"></textarea>
+        </div>
+        <button type="submit">💾 Save Settings</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
+      authDomain: "casemanagement-project.firebaseapp.com",
+      projectId: "casemanagement-project"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    document.getElementById("fileSettingsForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const citiesInput = document.getElementById("cities").value;
+      const fileTypesInput = document.getElementById("fileTypes").value;
+      const cities = citiesInput.split("\n").map(s => s.trim()).filter(Boolean);
+      const fileTypes = fileTypesInput.split("\n").map(s => s.trim()).filter(Boolean);
+
+      try {
+        await db.collection("config").doc("uploadSettings").set({ cities, fileTypes });
+        alert("✅ Settings saved successfully!");
+      } catch (err) {
+        console.error(err);
+        alert("❌ Failed to save settings.");
+      }
+    });
+
+    async function loadUploadSettings() {
+      const doc = await db.collection("config").doc("uploadSettings").get();
+      if (doc.exists) {
+        const data = doc.data();
+        document.getElementById("cities").value = (data.cities || []).join("\n");
+        document.getElementById("fileTypes").value = (data.fileTypes || []).join("\n");
+      }
+    }
+
+    function createForm() {
+      alert("Form builder will launch here (to be implemented).")
+    }
+
+    loadUploadSettings();
+  </script>
+</body>
+</html>
