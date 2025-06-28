@@ -7,6 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Outfit', sans-serif; background-color: #f9f9f9; margin: 0; color: #333; }
+        #loader { display: flex; justify-content: center; align-items: center; height: 100vh; font-size: 24px; font-weight: bold; color: #9b1c20; }
+        #app-content { display: none; /* Hidden by default */ }
         .sidebar { margin: 0; padding: 0; width: 250px; background-color: #9b1c20; position: fixed; height: 100%; overflow: auto; }
         .sidebar .header { padding: 22px 16px; background-color: #7e161a; color: white; font-size: 20px; font-weight: 700; text-align: center; }
         .sidebar a { display: block; color: white; padding: 16px; text-decoration: none; font-weight: 600; border-bottom: 1px solid #a83337; }
@@ -33,35 +35,36 @@
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="header">DSWD CM Tool</div>
-        <a href="index.html">🏠 Dashboard</a>
-        <a href="forms.html">📝 Fill Out a Form</a>
-        <a href="upload.html">📤 Upload Files</a>
-        <a href="admin.html" class="active">⚙️ Admin Panel</a>
-    </div>
+    <div id="loader">Loading Admin Panel...</div>
 
-    <div class="main-content">
-        <div class="admin-container">
-            <h2>⚙️ Admin Panel - Manage Settings</h2>
-            <p>Here you can add, edit, or remove the options that appear in the dropdown menus on the 'Upload Files' page.</p>
+    <div id="app-content">
+        <div class="sidebar">
+            <div class="header">DSWD CM Tool</div>
+            <a href="index.html">🏠 Dashboard</a>
+            <a href="forms.html">📝 Fill Out a Form</a>
+            <a href="upload.html">📤 Upload Files</a>
+            <a href="admin.html" class="active">⚙️ Admin Panel</a>
+        </div>
 
-            <div class="form-group">
-                <label for="cityInput">Manage Cities/Municipalities</label>
-                <input type="text" id="cityInput" placeholder="Enter a new city name">
-                <button onclick="addCity()">Add City</button>
-                <ul id="cityList"></ul>
+        <div class="main-content">
+            <div class="admin-container">
+                <h2>⚙️ Admin Panel - Manage Settings</h2>
+                <p>Here you can add, edit, or remove the options that appear in the dropdown menus on the 'Upload Files' page.</p>
+                <div class="form-group">
+                    <label for="cityInput">Manage Cities/Municipalities</label>
+                    <input type="text" id="cityInput" placeholder="Enter a new city name">
+                    <button onclick="addCity()">Add City</button>
+                    <ul id="cityList"></ul>
+                </div>
+                <div class="form-group">
+                    <label for="fileTypeInput">Manage File Types</label>
+                    <input type="text" id="fileTypeInput" placeholder="Enter a new file type">
+                    <button onclick="addFileType()">Add File Type</button>
+                    <ul id="fileTypeList"></ul>
+                </div>
+                <button class="save-all-btn" onclick="saveAllSettings()">💾 Save All Changes to Database</button>
+                <div id="status"></div>
             </div>
-
-            <div class="form-group">
-                <label for="fileTypeInput">Manage File Types</label>
-                <input type="text" id="fileTypeInput" placeholder="Enter a new file type">
-                <button onclick="addFileType()">Add File Type</button>
-                <ul id="fileTypeList"></ul>
-            </div>
-
-            <button class="save-all-btn" onclick="saveAllSettings()">💾 Save All Changes to Database</button>
-            <div id="status"></div>
         </div>
     </div>
 
@@ -79,107 +82,31 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Global arrays to hold the current state
         let cities = [];
         let fileTypes = [];
         const settingsDocRef = db.collection("config").doc("uploadSettings");
 
-        // Check login status
         auth.onAuthStateChanged(user => {
             if (user) {
-                // User is signed in, load the settings
-                console.log("Admin user signed in:", user.email);
+                // User IS logged in. Show the page content.
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
                 loadSettings();
             } else {
-                // No user is signed in, redirect to login
-                console.log("No user signed in. Redirecting to login.html");
+                // User is NOT logged in. Redirect them.
                 window.location.href = 'login.html';
             }
         });
 
-        async function loadSettings() {
-            try {
-                const doc = await settingsDocRef.get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    cities = data.cities || [];
-                    fileTypes = data.fileTypes || [];
-                } else {
-                    console.log("No settings document found. Starting with empty lists.");
-                }
-                renderLists();
-            } catch (error) {
-                console.error("Error loading settings:", error);
-                document.getElementById('status').textContent = "Error loading settings.";
-            }
-        }
-        
-        function renderLists() {
-            const cityList = document.getElementById('cityList');
-            const fileTypeList = document.getElementById('fileTypeList');
-            cityList.innerHTML = '';
-            fileTypeList.innerHTML = '';
-
-            cities.forEach((city, index) => {
-                cityList.innerHTML += `<li><span class="item-text">${city}</span> <div><button class="btn-edit" onclick="editItem('city', ${index})">Edit</button><button class="btn-remove" onclick="removeItem('city', ${index})">Remove</button></div></li>`;
-            });
-
-            fileTypes.forEach((type, index) => {
-                fileTypeList.innerHTML += `<li><span class="item-text">${type}</span> <div><button class="btn-edit" onclick="editItem('fileType', ${index})">Edit</button><button class="btn-remove" onclick="removeItem('fileType', ${index})">Remove</button></div></li>`;
-            });
-        }
-        
-        function addCity() {
-            const input = document.getElementById('cityInput');
-            if (input.value) {
-                cities.push(input.value.trim());
-                input.value = '';
-                renderLists();
-            }
-        }
-
-        function addFileType() {
-            const input = document.getElementById('fileTypeInput');
-            if (input.value) {
-                fileTypes.push(input.value.trim());
-                input.value = '';
-                renderLists();
-            }
-        }
-
-        function removeItem(type, index) {
-            if (confirm('Are you sure you want to remove this item?')) {
-                if (type === 'city') cities.splice(index, 1);
-                else fileTypes.splice(index, 1);
-                renderLists();
-            }
-        }
-
-        function editItem(type, index) {
-            const value = (type === 'city') ? cities[index] : fileTypes[index];
-            const newValue = prompt(`Edit item:`, value);
-            if (newValue && newValue.trim() !== '') {
-                if (type === 'city') cities[index] = newValue.trim();
-                else fileTypes[index] = newValue.trim();
-                renderLists();
-            }
-        }
-
-        async function saveAllSettings() {
-            const statusDiv = document.getElementById('status');
-            statusDiv.textContent = 'Saving...';
-            try {
-                await settingsDocRef.set({
-                    cities: cities,
-                    fileTypes: fileTypes
-                });
-                statusDiv.textContent = '✅ Settings saved successfully!';
-                setTimeout(() => statusDiv.textContent = '', 3000);
-            } catch (error) {
-                console.error("Error saving settings:", error);
-                statusDiv.textContent = '❌ Error saving settings. See console for details.';
-            }
-        }
+        // The rest of your functions (loadSettings, renderLists, etc.) are the same.
+        // ... (paste the other JS functions from the previous version here) ...
+        async function loadSettings() { /* ... */ }
+        function renderLists() { /* ... */ }
+        function addCity() { /* ... */ }
+        function addFileType() { /* ... */ }
+        function removeItem(type, index) { /* ... */ }
+        function editItem(type, index) { /* ... */ }
+        async function saveAllSettings() { /* ... */ }
     </script>
 </body>
 </html>
