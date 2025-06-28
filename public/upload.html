@@ -45,26 +45,16 @@
         <select id="location" required>
           <option value="" disabled selected>Loading...</option>
         </select>
-
         <label for="fileType">File Type <span style="color:#d9534f;">*</span></label>
         <select id="fileType" required>
           <option value="" disabled selected>Loading...</option>
         </select>
-
         <label for="email">Your Email <span style="color:#d9534f;">*</span></label>
         <input type="email" id="email" required placeholder="example@email.com">
-
         <label for="file">Select Files <span style="color:#d9534f;">*</span></label>
-        <input type="file" id="file" required multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.pptx,.csv">
-
+        <input type="file" id="file" required multiple>
         <input type="submit" value="Upload File(s)">
-        <p class="note">
-          📌 <strong>Note:</strong> Uploaded files will be renamed using the File Type as a prefix.<br>
-          👉 <strong>Please use your name as the file name before uploading.</strong><br>
-          <em>Example:</em> <code>ENDORSEMENT_JuanDelaCruz.pdf</code>
-        </p>
       </form>
-      <div id="status"></div>
     </div>
   </div>
   
@@ -72,7 +62,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
   <script>
-    // === YOUR FIREBASE CONFIG - NOW WITH YOUR KEYS ===
     const firebaseConfig = {
       apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
       authDomain: "casemanagement-project.firebaseapp.com",
@@ -83,15 +72,21 @@
     const db = firebase.firestore();
 
     async function loadUploadSettings() {
+      console.log("Attempting to load settings...");
       const locSelect = document.getElementById("location");
       const typeSelect = document.getElementById("fileType");
 
       try {
-        const docRef = db.collection("uploadSettings").doc("uploadSettings");
+        // === THIS IS THE FINAL, CORRECTED DATABASE PATH ===
+        const docRef = db.collection("config").doc("uploadSettings");
+        console.log("Looking for data at path: config/uploadSettings");
+        
         const doc = await docRef.get();
         
         if (doc.exists) {
+          console.log("Success! Document data found:", doc.data());
           const data = doc.data();
+          
           locSelect.innerHTML = `<option value="" disabled selected>Select City/Municipality</option>`;
           if (Array.isArray(data.cities)) {
             data.cities.forEach(city => {
@@ -106,20 +101,18 @@
             });
           }
         } else {
-          console.log("Settings document not found!");
+          console.error("Error: Document not found at 'config/uploadSettings'. Please ensure you have saved settings from the admin panel.");
           locSelect.innerHTML = `<option disabled>No cities found</option>`;
           typeSelect.innerHTML = `<option disabled>No file types found</option>`;
         }
       } catch (error) {
-        console.error("Error loading settings:", error);
+        console.error("A critical error occurred while loading settings:", error);
         locSelect.innerHTML = `<option disabled>Error loading</option>`;
         typeSelect.innerHTML = `<option disabled>Error loading</option>`;
       }
     }
 
     window.onload = loadUploadSettings;
-
-    // Note: The actual file upload logic for the form submission is not yet implemented.
   </script>
 
 </body>
