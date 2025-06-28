@@ -4,8 +4,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel | DSWD CM Tool</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <style>
     :root {
       --primary-color: #9b1c20;
@@ -115,60 +113,49 @@
     </div>
 
     <div class="section">
-      <h2>📁 Manage Upload Settings</h2>
+      <h2>📁 Manage Upload File Types</h2>
       <form id="fileSettingsForm">
         <div class="form-group">
-          <label for="cities">City/Municipality</label>
-          <textarea id="cities" rows="3" placeholder="e.g. TAGAYTAY CITY\nIMUS\nBACOOR"></textarea>
+          <label for="cities">City/Municipality (Comma Separated)</label>
+          <input type="text" id="cities" placeholder="e.g. TAGAYTAY CITY, IMUS, BACOOR">
         </div>
         <div class="form-group">
-          <label for="fileTypes">File Types</label>
-          <textarea id="fileTypes" rows="3" placeholder="e.g. ENDORSEMENT\nNATT ENDORSEMENT\nOTHER"></textarea>
+          <label for="fileTypes">File Types (Comma Separated)</label>
+          <input type="text" id="fileTypes" placeholder="e.g. ENDORSEMENT, NATT ENDORSEMENT, OTHER">
         </div>
-        <button type="submit">💾 Save Settings</button>
+        <div class="form-group">
+          <label for="driveFolderId">Google Drive Folder ID</label>
+          <input type="text" id="driveFolderId" placeholder="Enter Google Drive Folder ID">
+        </div>
+        <button type="submit">💾 Save Upload Settings</button>
       </form>
     </div>
   </div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
-      authDomain: "casemanagement-project.firebaseapp.com",
-      projectId: "casemanagement-project"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    document.getElementById("fileSettingsForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
-      const citiesInput = document.getElementById("cities").value;
-      const fileTypesInput = document.getElementById("fileTypes").value;
-      const cities = citiesInput.split("\n").map(s => s.trim()).filter(Boolean);
-      const fileTypes = fileTypesInput.split("\n").map(s => s.trim()).filter(Boolean);
-
-      try {
-        await db.collection("config").doc("uploadSettings").set({ cities, fileTypes });
-        alert("✅ Settings saved successfully!");
-      } catch (err) {
-        console.error(err);
-        alert("❌ Failed to save settings.");
-      }
-    });
-
-    async function loadUploadSettings() {
-      const doc = await db.collection("config").doc("uploadSettings").get();
-      if (doc.exists) {
-        const data = doc.data();
-        document.getElementById("cities").value = (data.cities || []).join("\n");
-        document.getElementById("fileTypes").value = (data.fileTypes || []).join("\n");
-      }
-    }
-
     function createForm() {
-      alert("Form builder will launch here (to be implemented).")
+      alert("Form builder will launch here (to be implemented).);
     }
 
-    loadUploadSettings();
+    document.getElementById("fileSettingsForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const cities = document.getElementById("cities").value.split(",").map(c => c.trim());
+      const fileTypes = document.getElementById("fileTypes").value.split(",").map(f => f.trim());
+      const folderId = document.getElementById("driveFolderId").value.trim();
+
+      const settings = {
+        cities,
+        fileTypes,
+        driveFolderId: folderId
+      };
+
+      fetch("https://casemanagement-server.onrender.com/save-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings)
+      })
+      .then(res => res.ok ? alert("Settings saved successfully") : alert("Error saving settings"));
+    });
   </script>
 </body>
 </html>
