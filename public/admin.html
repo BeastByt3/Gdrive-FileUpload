@@ -1,195 +1,185 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel | DSWD CM Tool</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --primary-color: #9b1c20;
-      --secondary-color: #f9f9f9;
-      --accent-color: #ffc107;
-      --text-color: #333;
-    }
-    body {
-      font-family: 'Outfit', sans-serif;
-      background-color: var(--secondary-color);
-      margin: 0;
-      padding: 0;
-      color: var(--text-color);
-    }
-    header {
-      background-color: var(--primary-color);
-      color: white;
-      padding: 20px;
-      text-align: center;
-      font-size: 22px;
-      font-weight: 700;
-    }
-    .container {
-      max-width: 1000px;
-      margin: 20px auto;
-      padding: 20px;
-      background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    h2 {
-      color: var(--primary-color);
-      margin-bottom: 10px;
-    }
-    .section {
-      margin-bottom: 40px;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      font-weight: 600;
-      display: block;
-      margin-bottom: 5px;
-    }
-    input, button {
-      padding: 10px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      box-sizing: border-box;
-    }
-    input[type="text"] {
-      width: 70%;
-    }
-    button {
-      background-color: var(--primary-color);
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 5px;
-    }
-    button:hover {
-      background-color: #7e161a;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    ul li {
-      padding: 5px 0;
-    }
-    .remove-btn {
-      background-color: #ccc;
-      color: #333;
-      margin-left: 10px;
-      font-size: 12px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | DSWD CM Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #f9f9f9; margin: 0; color: #333; }
+        .sidebar { margin: 0; padding: 0; width: 250px; background-color: #9b1c20; position: fixed; height: 100%; overflow: auto; }
+        .sidebar .header { padding: 22px 16px; background-color: #7e161a; color: white; font-size: 20px; font-weight: 700; text-align: center; }
+        .sidebar a { display: block; color: white; padding: 16px; text-decoration: none; font-weight: 600; border-bottom: 1px solid #a83337; }
+        .sidebar a.active { background-color: #ffc107; color: #333; }
+        .sidebar a:hover:not(.active) { background-color: #a83337; }
+        .main-content { margin-left: 265px; padding: 20px; }
+        .admin-container { background: #fff; padding: 30px; border-radius: 8px; max-width: 900px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { color: #9b1c20; }
+        .form-group { margin-bottom: 20px; }
+        label { font-weight: 600; display: block; margin-bottom: 5px; }
+        input[type="text"] { width: 70%; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
+        button { background-color: #9b1c20; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-left: 5px; }
+        button:hover { background-color: #7e161a; }
+        .save-all-btn { background-color: #28a745; font-size: 16px; padding: 12px; width: 100%; margin-top: 20px; }
+        .save-all-btn:hover { background-color: #218838; }
+        ul { list-style: none; padding: 0; }
+        li { background: #f4f4f4; padding: 10px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .item-text { flex-grow: 1; }
+        .btn-edit { background-color: #ffc107; color: #333; }
+        .btn-remove { background-color: #dc3545; }
+        #status { margin-top: 15px; font-weight: bold; }
+        @media screen and (max-width: 700px) { .sidebar { width: 100%; height: auto; position: relative; } .sidebar a { float: left; } .main-content { margin-left: 0; } }
+    </style>
 </head>
 <body>
-  <header>
-    🛠️ Admin Panel - DSWD Case Management Tool
-  </header>
 
-  <div class="container">
-    <div class="section">
-      <h2>📁 Manage Upload File Types</h2>
-      <div class="form-group">
-        <label>City/Municipality</label>
-        <input type="text" id="cityInput" placeholder="Enter City or Municipality">
-        <button onclick="addCity()">Add City</button>
-        <ul id="cityList"></ul>
-      </div>
-
-      <div class="form-group">
-        <label>File Types</label>
-        <input type="text" id="fileTypeInput" placeholder="Enter File Type">
-        <button onclick="addFileType()">Add File Type</button>
-        <ul id="fileTypeList"></ul>
-      </div>
-
-      <div class="form-group">
-        <label>Google Drive Folder ID</label>
-        <input type="text" id="driveFolderId" placeholder="Enter Google Drive Folder ID">
-      </div>
-
-      <button onclick="saveSettings()">💾 Save Upload Settings</button>
+    <div class="sidebar">
+        <div class="header">DSWD CM Tool</div>
+        <a href="index.html">🏠 Dashboard</a>
+        <a href="forms.html">📝 Fill Out a Form</a>
+        <a href="upload.html">📤 Upload Files</a>
+        <a href="admin.html" class="active">⚙️ Admin Panel</a>
     </div>
-  </div>
 
-  <script>
-    let cities = [];
-    let fileTypes = [];
+    <div class="main-content">
+        <div class="admin-container">
+            <h2>⚙️ Admin Panel - Manage Settings</h2>
+            <p>Here you can add, edit, or remove the options that appear in the dropdown menus on the 'Upload Files' page.</p>
 
-    function addCity() {
-      const input = document.getElementById("cityInput");
-      const value = input.value.trim();
-      if (value && !cities.includes(value)) {
-        cities.push(value);
-        updateList("cityList", cities, "city");
-        input.value = "";
-      }
-    }
+            <div class="form-group">
+                <label for="cityInput">Manage Cities/Municipalities</label>
+                <input type="text" id="cityInput" placeholder="Enter a new city name">
+                <button onclick="addCity()">Add City</button>
+                <ul id="cityList"></ul>
+            </div>
 
-    function addFileType() {
-      const input = document.getElementById("fileTypeInput");
-      const value = input.value.trim();
-      if (value && !fileTypes.includes(value)) {
-        fileTypes.push(value);
-        updateList("fileTypeList", fileTypes, "file");
-        input.value = "";
-      }
-    }
+            <div class="form-group">
+                <label for="fileTypeInput">Manage File Types</label>
+                <input type="text" id="fileTypeInput" placeholder="Enter a new file type">
+                <button onclick="addFileType()">Add File Type</button>
+                <ul id="fileTypeList"></ul>
+            </div>
 
-    function removeItem(type, index) {
-      if (type === "city") cities.splice(index, 1);
-      else fileTypes.splice(index, 1);
-      updateList(type === "city" ? "cityList" : "fileTypeList", type === "city" ? cities : fileTypes, type);
-    }
+            <button class="save-all-btn" onclick="saveAllSettings()">💾 Save All Changes to Database</button>
+            <div id="status"></div>
+        </div>
+    </div>
 
-    function updateList(listId, items, type) {
-      const list = document.getElementById(listId);
-      list.innerHTML = "";
-      items.forEach((item, index) => {
-        const li = document.createElement("li");
-        li.textContent = item;
-        const btn = document.createElement("button");
-        btn.textContent = "✖";
-        btn.className = "remove-btn";
-        btn.onclick = () => removeItem(type, index);
-        li.appendChild(btn);
-        list.appendChild(li);
-      });
-    }
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
-    function saveSettings() {
-      const folderId = document.getElementById("driveFolderId").value.trim();
-      fetch("https://casemanagement-server.onrender.com/save-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cities,
-          fileTypes,
-          driveFolderId: folderId
-        })
-      })
-      .then(res => res.ok ? alert("Settings saved successfully!") : alert("Error saving settings"));
-    }
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
+            authDomain: "casemanagement-project.firebaseapp.com",
+            projectId: "casemanagement-project"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
 
-    async function loadSettings() {
-      try {
-        const res = await fetch("https://casemanagement-server.onrender.com/get-settings");
-        const data = await res.json();
-        cities = data.cities || [];
-        fileTypes = data.fileTypes || [];
-        document.getElementById("driveFolderId").value = data.driveFolderId || "";
-        updateList("cityList", cities, "city");
-        updateList("fileTypeList", fileTypes, "file");
-      } catch (e) {
-        console.error("Failed to load settings:", e);
-      }
-    }
+        // Global arrays to hold the current state
+        let cities = [];
+        let fileTypes = [];
+        const settingsDocRef = db.collection("config").doc("uploadSettings");
 
-    window.onload = loadSettings;
-  </script>
+        // Check login status
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in, load the settings
+                console.log("Admin user signed in:", user.email);
+                loadSettings();
+            } else {
+                // No user is signed in, redirect to login
+                console.log("No user signed in. Redirecting to login.html");
+                window.location.href = 'login.html';
+            }
+        });
+
+        async function loadSettings() {
+            try {
+                const doc = await settingsDocRef.get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    cities = data.cities || [];
+                    fileTypes = data.fileTypes || [];
+                } else {
+                    console.log("No settings document found. Starting with empty lists.");
+                }
+                renderLists();
+            } catch (error) {
+                console.error("Error loading settings:", error);
+                document.getElementById('status').textContent = "Error loading settings.";
+            }
+        }
+        
+        function renderLists() {
+            const cityList = document.getElementById('cityList');
+            const fileTypeList = document.getElementById('fileTypeList');
+            cityList.innerHTML = '';
+            fileTypeList.innerHTML = '';
+
+            cities.forEach((city, index) => {
+                cityList.innerHTML += `<li><span class="item-text">${city}</span> <div><button class="btn-edit" onclick="editItem('city', ${index})">Edit</button><button class="btn-remove" onclick="removeItem('city', ${index})">Remove</button></div></li>`;
+            });
+
+            fileTypes.forEach((type, index) => {
+                fileTypeList.innerHTML += `<li><span class="item-text">${type}</span> <div><button class="btn-edit" onclick="editItem('fileType', ${index})">Edit</button><button class="btn-remove" onclick="removeItem('fileType', ${index})">Remove</button></div></li>`;
+            });
+        }
+        
+        function addCity() {
+            const input = document.getElementById('cityInput');
+            if (input.value) {
+                cities.push(input.value.trim());
+                input.value = '';
+                renderLists();
+            }
+        }
+
+        function addFileType() {
+            const input = document.getElementById('fileTypeInput');
+            if (input.value) {
+                fileTypes.push(input.value.trim());
+                input.value = '';
+                renderLists();
+            }
+        }
+
+        function removeItem(type, index) {
+            if (confirm('Are you sure you want to remove this item?')) {
+                if (type === 'city') cities.splice(index, 1);
+                else fileTypes.splice(index, 1);
+                renderLists();
+            }
+        }
+
+        function editItem(type, index) {
+            const value = (type === 'city') ? cities[index] : fileTypes[index];
+            const newValue = prompt(`Edit item:`, value);
+            if (newValue && newValue.trim() !== '') {
+                if (type === 'city') cities[index] = newValue.trim();
+                else fileTypes[index] = newValue.trim();
+                renderLists();
+            }
+        }
+
+        async function saveAllSettings() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = 'Saving...';
+            try {
+                await settingsDocRef.set({
+                    cities: cities,
+                    fileTypes: fileTypes
+                });
+                statusDiv.textContent = '✅ Settings saved successfully!';
+                setTimeout(() => statusDiv.textContent = '', 3000);
+            } catch (error) {
+                console.error("Error saving settings:", error);
+                statusDiv.textContent = '❌ Error saving settings. See console for details.';
+            }
+        }
+    </script>
 </body>
 </html>
