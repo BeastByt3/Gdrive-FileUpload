@@ -73,6 +73,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
     <script>
+        // === START OF COMPLETE SCRIPT ===
         const firebaseConfig = {
             apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
             authDomain: "casemanagement-project.firebaseapp.com",
@@ -88,25 +89,98 @@
 
         auth.onAuthStateChanged(user => {
             if (user) {
-                // User IS logged in. Show the page content.
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('app-content').style.display = 'block';
                 loadSettings();
             } else {
-                // User is NOT logged in. Redirect them.
                 window.location.href = 'login.html';
             }
         });
 
-        // The rest of your functions (loadSettings, renderLists, etc.) are the same.
-        // ... (paste the other JS functions from the previous version here) ...
-        async function loadSettings() { /* ... */ }
-        function renderLists() { /* ... */ }
-        function addCity() { /* ... */ }
-        function addFileType() { /* ... */ }
-        function removeItem(type, index) { /* ... */ }
-        function editItem(type, index) { /* ... */ }
-        async function saveAllSettings() { /* ... */ }
+        async function loadSettings() {
+            try {
+                const doc = await settingsDocRef.get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    cities = data.cities || [];
+                    fileTypes = data.fileTypes || [];
+                } else {
+                    console.log("No settings document found. Starting with empty lists.");
+                }
+                renderLists();
+            } catch (error) {
+                console.error("Error loading settings:", error);
+                document.getElementById('status').textContent = "Error loading settings.";
+            }
+        }
+        
+        function renderLists() {
+            const cityList = document.getElementById('cityList');
+            const fileTypeList = document.getElementById('fileTypeList');
+            cityList.innerHTML = '';
+            fileTypeList.innerHTML = '';
+
+            cities.forEach((city, index) => {
+                cityList.innerHTML += `<li><span class="item-text">${city}</span> <div><button class="btn-edit" onclick="editItem('city', ${index})">Edit</button><button class="btn-remove" onclick="removeItem('city', ${index})">Remove</button></div></li>`;
+            });
+
+            fileTypes.forEach((type, index) => {
+                fileTypeList.innerHTML += `<li><span class="item-text">${type}</span> <div><button class="btn-edit" onclick="editItem('fileType', ${index})">Edit</button><button class="btn-remove" onclick="removeItem('fileType', ${index})">Remove</button></div></li>`;
+            });
+        }
+        
+        function addCity() {
+            const input = document.getElementById('cityInput');
+            if (input.value) {
+                cities.push(input.value.trim());
+                input.value = '';
+                renderLists();
+            }
+        }
+
+        function addFileType() {
+            const input = document.getElementById('fileTypeInput');
+            if (input.value) {
+                fileTypes.push(input.value.trim());
+                input.value = '';
+                renderLists();
+            }
+        }
+
+        function removeItem(type, index) {
+            if (confirm('Are you sure you want to remove this item?')) {
+                if (type === 'city') cities.splice(index, 1);
+                else fileTypes.splice(index, 1);
+                renderLists();
+            }
+        }
+
+        function editItem(type, index) {
+            const value = (type === 'city') ? cities[index] : fileTypes[index];
+            const newValue = prompt(`Edit item:`, value);
+            if (newValue && newValue.trim() !== '') {
+                if (type === 'city') cities[index] = newValue.trim();
+                else fileTypes[index] = newValue.trim();
+                renderLists();
+            }
+        }
+
+        async function saveAllSettings() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = 'Saving...';
+            try {
+                await settingsDocRef.set({
+                    cities: cities,
+                    fileTypes: fileTypes
+                });
+                statusDiv.textContent = '✅ Settings saved successfully!';
+                setTimeout(() => statusDiv.textContent = '', 3000);
+            } catch (error) {
+                console.error("Error saving settings:", error);
+                statusDiv.textContent = '❌ Error saving settings. Make sure your security rules are correct.';
+            }
+        }
+        // === END OF COMPLETE SCRIPT ===
     </script>
 </body>
 </html>
