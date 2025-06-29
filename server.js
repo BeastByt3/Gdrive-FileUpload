@@ -13,74 +13,61 @@ app.use(express.json());
 
 // This helper function is stable and works for all Google services
 async function getGoogleAuthClient(scopes) {
-  try {
-    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-    const auth = new GoogleAuth({ credentials, scopes });
-    return auth.getClient();
-  } catch (error) {
-    console.error('FATAL: Could not parse GOOGLE_CREDENTIALS. Check the environment variable on Render.', error);
-    throw new Error('Authentication setup failed.');
-  }
+  const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+  const auth = new GoogleAuth({ credentials, scopes });
+  return auth.getClient();
 }
 
-// === STABLE ENDPOINT FOR ALL FORM SUBMISSIONS ===
-app.post('/submit-form', async (req, res) => {
-  console.log("--- Received a new form submission ---");
+// Endpoint for File Uploads to Google Drive (This is working)
+app.post('/upload-file', multer({ storage: multer.memoryStorage() }).single('file'), async (req, res) => {
   try {
-    const { submissionData, spreadsheetId, headers } = req.body;
-
-    if (!submissionData || !spreadsheetId || !headers) {
-      console.error("Missing submissionData, spreadsheetId, or headers.");
-      return res.status(400).json({ success: false, error: 'Incomplete request from the website.' });
-    }
-
-    console.log(`Targeting Spreadsheet ID: ${spreadsheetId}`);
-
-    // Dynamically create the data row in the correct order based on the headers
-    const dataRow = headers.map(header => submissionData[header.name] || '');
-    console.log('Formatted Data Row:', dataRow);
-
-    // Connect to Google Sheets
-    const authClient = await getGoogleAuthClient(['https://www.googleapis.com/auth/spreadsheets']);
-    const sheets = google.sheets({ version: 'v4', auth: authClient });
-
-    // Check if headers exist, if not, create them
-    const headerCheck = await sheets.spreadsheets.values.get({
-        spreadsheetId,
-        range: 'Sheet1!1:1',
+    if (!req.file) return res.status(400).send('No file uploaded.');
+    const authClient = await getGoogleAuthClient(['https://www.googleapis.com/auth/drive.file']);
+    const drive = google.drive({ version: 'v3', auth: authClient });
+    const bufferStream = new stream.PassThrough().end(req.file.buffer);
+    const { data } = await drive.files.create({
+      media: { mimeType: req.file.mimetype, body: bufferStream },
+      requestBody: { name: req.file.originalname, parents: [process.env.DRIVE_FOLDER_ID] },
     });
-    
-    if (!headerCheck.data.values || headerCheck.data.values.length === 0) {
-        console.log("No headers found. Creating them...");
-        const headerRow = ['Timestamp', ...headers.map(h => h.label)];
-        await sheets.spreadsheets.values.update({
-            spreadsheetId,
-            range: 'Sheet1!A1',
-            valueInputOption: 'USER_ENTERED',
-            resource: { values: [headerRow] },
-        });
-    }
-
-    // Append the new data row
-    await sheets.spreadsheets.values.append({
-        spreadsheetId,
-        range: 'Sheet1!A1',
-        valueInputOption: 'USER_ENTERED',
-        resource: { values: [ [new Date().toISOString(), ...dataRow] ] },
-    });
-
-    console.log("Success! Data saved to Google Sheet.");
-    res.status(200).json({ success: true, message: 'Your submission has been saved.' });
-
+    res.status(200).json({ success: true, message: `File "${data.name}" uploaded successfully.` });
   } catch (error) {
-    console.error('--- ERROR in /submit-form endpoint ---', error);
-    res.status(500).json({ success: false, error: 'A server error occurred.' });
+    console.error('--- ERROR during file upload ---', error);
+    res.status(500).json({ success: false, error: 'Error uploading file.' });
   }
 });
 
 
-// All your other working endpoints like /upload-file can remain here.
-// ...
+// Endpoint for Form Submissions to Google Sheets
+app.post('/submit-shs', async (req, res) => {
+  console.log("--- New SHS form submission request ---");
+  try {
+    const studentData = req.body;
+    const authClient = await getGoogleAuthClient(['https://www.googleapis.com/auth/spreadsheets']);
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
+    
+    // This is the stable, hardcoded row order for the SHS form
+    const newRow = [
+      new Date().toISOString(), studentData.hhId || '', studentData.lastName || '', studentData.firstName || '',
+      studentData.middleName || '', studentData.extName || '', studentData.birthday || '',
+      studentData.sex || '', studentData.civilStatus || '', studentData.ipAffiliation || '',
+      studentData.disability || '', studentData.attendingSchool || '', studentData.gradeLevel || '',
+      studentData.track || '', studentData.strand || '', studentData.curriculumExit || ''
+    ];
+
+    await sheets.spreadsheets.values.append({
+        spreadsheetId: process.env.SPREADSHEET_ID,
+        range: 'Sheet1!A1',
+        valueInputOption: 'USER_ENTERED',
+        resource: { values: [newRow] },
+    });
+    
+    console.log("Success! Data saved to Google Sheet.");
+    res.status(200).json({ success: true, message: 'Your submission has been saved.' });
+  } catch (error) {
+    console.error('--- ERROR saving to Google Sheets ---', error);
+    res.status(500).json({ success: false, error: 'A server error occurred.' });
+  }
+});
 
 
 // Root URL to confirm server is running
