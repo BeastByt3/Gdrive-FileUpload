@@ -4,21 +4,18 @@ const { GoogleAuth } = require('google-auth-library');
 const { google } = require('googleapis');
 const multer = require('multer');
 const stream = require('stream');
-// IMPORTANT: We need Firebase Admin on the server to read form definitions
 const admin = require('firebase-admin');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- INITIALIZATION ---
-// Initialize Firebase Admin
-admin.initializeApp({
-  credential: admin.credential.cert(JSON.parse(process.env.GOOGLE_CREDENTIALS))
-});
+// --- CORRECT INITIALIZATION ---
+// We initialize Firebase Admin WITHOUT credentials here.
+// It will automatically find them in the Render environment.
+admin.initializeApp();
 const db = admin.firestore();
 
-// ... (multer setup and other endpoints like /upload-file can remain) ...
 
 // === THE NEW, SMART, DYNAMIC SUBMISSION ENDPOINT ===
 app.post('/submit-form', async (req, res) => {
@@ -44,24 +41,23 @@ app.post('/submit-form', async (req, res) => {
     const dataRow = [new Date().toISOString()];
     
     formDef.fields.forEach(field => {
-      headers.push(field.label); // The human-readable label for the header
-      dataRow.push(submissionData[field.name] || ''); // The data, matched by the machine-readable name
+      headers.push(field.label);
+      dataRow.push(submissionData[field.name] || '');
     });
 
-    console.log('Ordered Headers:', headers);
     console.log('Ordered Data Row:', dataRow);
 
-    // 3. Connect to Google Sheets
+    // 3. Connect to Google Sheets using GoogleAuth (The Correct Way)
     const auth = new GoogleAuth({
         credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
         scopes: 'https://www.googleapis.com/auth/spreadsheets',
     });
     const sheets = google.sheets({ version: 'v4', auth });
     
-    // 4. Check if headers exist. If not, create them.
+    // 4. Check for headers and create them if they don't exist
     const headerCheck = await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: 'Sheet1!A1:Z1',
+        range: 'Sheet1!1:1',
     });
     
     if (!headerCheck.data.values || headerCheck.data.values.length === 0) {
@@ -91,7 +87,8 @@ app.post('/submit-form', async (req, res) => {
   }
 });
 
-// You can now remove the old /submit-shs and /create-headers endpoints if you wish
+// All other endpoints and app.listen remain the same
+// ...
 
 app.listen(process.env.PORT || 3000, () => {
   console.log('Server is running.');
