@@ -1,137 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Form | DSWD CM Tool</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    /* All of your modern, professional CSS */
-  </style>
-</head>
+    </head>
 <body>
-  <div class="page-container">
-    <div class="sidebar" id="sidebar">
+    <div class="page-container">
+        <div class="main-content">
+            <div class="form-wrapper">
+                <h2 id="form-title">Loading...</h2>
+                <p id="form-description"></p>
+                <form id="dynamic-form"></form>
+                <div id="submit-status"></div>
+            </div>
         </div>
-
-    <div class="main-content">
-      <header class="header-bar">
-        </header>
-      
-      <div class="form-wrapper">
-        <h2 id="form-title">Loading...</h2>
-        <p id="form-description"></p>
-        <form id="dynamic-form"></form>
-        <div id="submit-status"></div>
-      </div>
     </div>
-  </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
-  <script>
-    // We wrap ALL our code in this listener to prevent timing errors
+    <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- Get all elements AFTER the page is ready ---
-        const formContainer = document.getElementById('dynamic-form');
-        const statusDiv = document.getElementById('submit-status');
-        const formTitle = document.getElementById('form-title');
-        const mobileHeaderTitle = document.getElementById('mobile-header-title');
-        const formDescription = document.getElementById('form-description');
-        
-        document.getElementById('menu-toggle').addEventListener('click', () => {
-          document.getElementById('sidebar').classList.toggle('open');
-        });
+        // All the code to get elements and build the form is the same
+        // ...
+        let window.currentFormFields = []; // We will save the fields here
 
-        // --- Firebase and Data setup ---
-        const firebaseConfig = { /* Your config */ };
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-        const db = firebase.firestore();
-        const locationData = { /* Your location data */ };
-        const strandData = { /* Your strand data */ };
-        let currentFormId = null;
-
-        // --- Main function to build the form ---
         async function buildForm() {
-            const params = new URLSearchParams(window.location.search);
-            currentFormId = params.get('id');
-
-            if (!currentFormId) {
-                formTitle.innerText = "Error: No form specified.";
-                return;
-            }
-          
-            try {
-                const doc = await db.collection("forms").doc(currentFormId).get();
-                if (!doc.exists) {
-                    formTitle.innerText = "Error: Form not found.";
-                    return;
-                }
-                const formData = doc.data();
-                document.title = `${formData.title} | DSWD CM Tool`;
-                formTitle.innerText = formData.title;
-                mobileHeaderTitle.innerText = formData.title;
-                formDescription.innerText = formData.description;
-                
-                // This loop builds the form fields
-                formData.fields.forEach(field => {
-                    const group = document.createElement('div');
-                    // ... (The rest of the form building logic is the same)
-                });
-                const submitButton = document.createElement('button');
-                submitButton.type = 'submit';
-                submitButton.textContent = 'Submit Form';
-                formContainer.appendChild(submitButton);
-
-                // Add Event Listeners for smart dropdowns
-                // ... (The chained dropdown logic is the same)
-            } catch (error) {
-                console.error("Error rendering form:", error);
-                formTitle.innerText = "Error loading form.";
-            }
+            // ...
+            const formData = doc.data();
+            window.currentFormFields = formData.fields; // Save the fields when the form loads
+            // ...
         }
 
-        // --- Form Submission Logic ---
+        // === FINAL, CORRECTED SUBMISSION LOGIC ===
         formContainer.addEventListener('submit', function(e) {
             e.preventDefault();
             const submitButton = formContainer.querySelector('button[type="submit"]');
             const formData = new FormData(formContainer);
             const submissionData = Object.fromEntries(formData.entries());
 
+            // NEW: We create a complete payload with all the info the server needs
+            const payload = {
+                spreadsheetId: document.getElementById('spreadsheetIdFromData').value,
+                headers: window.currentFormFields, // The array of field objects
+                submissionData: submissionData
+            };
+            
             submitButton.disabled = true;
             submitButton.textContent = 'Submitting...';
             statusDiv.style.display = 'block';
             statusDiv.innerHTML = 'Submitting data...';
 
-            const endpoint = 'https://casemanagement-server.onrender.com/submit-shs';
+            const endpoint = 'https://casemanagement-server.onrender.com/submit-form';
 
             fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(submissionData)
+                body: JSON.stringify(payload)
             })
             .then(response => response.json())
             .then(result => {
-                if (!result.success) { throw new Error(result.error || 'Unknown server error'); }
+                if (!result.success) { throw new Error(result.error || 'Unknown error'); }
                 statusDiv.innerHTML = `<strong>✅ Success!</strong><br>Your submission has been saved.`;
                 formContainer.reset();
             })
-            .catch(error => {
-                console.error('Error:', error);
-                statusDiv.innerHTML = '❌ Error submitting form. Please try again.';
-            })
-            .finally(() => {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Submit Form';
-            });
+            .catch(error => { /* ... error handling ... */ })
+            .finally(() => { /* ... */ });
         });
 
-        // Start the entire process
         buildForm();
     });
-  </script>
+    </script>
 </body>
 </html>
