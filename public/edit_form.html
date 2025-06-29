@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Form | DSWD CM Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* All your modern CSS goes here */
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <div class="sidebar" id="sidebar">
+        </div>
+
+    <div class="main-content">
+        <header class="header-bar">
+            </header>
+        
+        <div class="form-wrapper">
+            <h2 id="page-title">Create New Form</h2>
+            <form id="form-editor">
+                <div>
+                    <label for="formTitle">Form Title</label>
+                    <input type="text" id="formTitle" required>
+                </div>
+                <div>
+                    <label for="formDescription">Description</label>
+                    <textarea id="formDescription" required></textarea>
+                </div>
+                <div>
+                    <label for="spreadsheetId">Google Sheet ID</label>
+                    <input type="text" id="spreadsheetId" required placeholder="Paste the ID from your Google Sheet URL here...">
+                </div>
+                <button type="submit" class="btn-save">Save Form Details</button>
+            </form>
+            <div id="status"></div>
+        </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script>
+    // The complete JavaScript from the previous step goes here
+    // including the onAuthStateChanged and loadFormData functions with logging
+  </script>
+</body>
+</html>

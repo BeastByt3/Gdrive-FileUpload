@@ -8,26 +8,52 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    /* The CSS is the same as the last version */
-    :root { --primary-red: #9b1c20; /* ... etc ... */ }
-    body { font-family: 'Inter', sans-serif; /* ... */ }
-    /* ... */
+    /* This is the full, modern CSS from your other pages */
+    :root { --primary-red: #9b1c20; --dark-red: #7e161a; --accent-gold: #ffc107; --light-gray: #f4f7f6; --text-dark: #333333; --text-light: #ffffff; --border-color: #e0e0e0; }
+    body { font-family: 'Inter', sans-serif; background-color: var(--light-gray); margin: 0; color: var(--text-dark); }
+    .page-container { display: flex; }
+    .sidebar { width: 250px; background-color: var(--primary-red); height: 100vh; position: fixed; left: 0; top: 0; transition: transform 0.3s ease; }
+    .sidebar .header { padding: 20px; background-color: var(--dark-red); color: var(--text-light); font-size: 20px; font-weight: 700; text-align: center; }
+    .sidebar a { display: block; color: var(--text-light); padding: 18px 20px; text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--dark-red); transition: background-color 0.2s; }
+    .sidebar a.active { background-color: var(--accent-gold); color: var(--text-dark); }
+    .sidebar a:hover:not(.active) { background-color: var(--dark-red); }
+    .main-content { flex-grow: 1; margin-left: 250px; padding: 30px; transition: margin-left 0.3s ease; }
+    .header-bar { display: none; justify-content: space-between; align-items: center; background: var(--text-light); padding: 10px 20px; border-bottom: 1px solid var(--border-color); }
+    .menu-toggle { font-size: 28px; cursor: pointer; background: none; border: none; }
+    h2 { color: var(--primary-red); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 0; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .btn-create { background-color: var(--primary-red); color: var(--text-light); padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; transition: background-color 0.2s; }
+    .btn-create:hover { background-color: var(--dark-red); }
+    .form-list-table { width: 100%; border-collapse: collapse; background-color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
+    .form-list-table th, .form-list-table td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    .form-list-table th { background-color: var(--light-gray); font-weight: 600; }
+    .btn-edit { background-color: var(--accent-gold); color: var(--text-dark); padding: 6px 12px; text-decoration: none; border-radius: 5px; font-size: 14px; }
+    @media screen and (max-width: 768px) { .sidebar { transform: translateX(-100%); z-index: 1000; } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; padding: 20px; } .header-bar { display: flex; } .admin-header { flex-direction: column; align-items: flex-start; } .btn-create { margin-top: 15px; width: 100%; text-align: center; box-sizing: border-box;} }
   </style>
 </head>
 <body>
   <div class="page-container">
     <div class="sidebar" id="sidebar">
+        <div class="header">DSWD CM Tool</div>
+        <a href="index.html">🏠 Dashboard</a>
+        <a href="forms.html">📝 Fill Out a Form</a>
+        <a href="upload.html">📤 Upload Files</a>
         <a href="admin.html" class="active">⚙️ Admin Panel</a>
+        <a href="login.html">🔒 Login</a>
     </div>
 
     <div class="main-content">
         <header class="header-bar">
-            </header>
+            <span style="font-weight: 700; color: var(--primary-red);">Admin Panel</span>
+            <button class="menu-toggle" id="menu-toggle">☰</button>
+        </header>
         
         <div class="admin-header">
             <h2>Form Management</h2>
             <a href="edit_form.html" class="btn-create">+ Create New Form</a>
         </div>
+        
+        <p>Here you can view, edit, and manage all of the forms for your application.</p>
         
         <table class="form-list-table">
             <thead>
@@ -49,14 +75,22 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
   <script>
-    // --- Mobile Menu script is the same ---
-    document.getElementById('menu-toggle').addEventListener('click', () => { /* ... */ });
+    // Mobile Menu
+    document.getElementById('menu-toggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
 
-    const firebaseConfig = { /* ... Your config ... */ };
+    // Firebase Init
+    const firebaseConfig = {
+        apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
+        authDomain: "casemanagement-project.firebaseapp.com",
+        projectId: "casemanagement-project"
+    };
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
     const db = firebase.firestore();
     const auth = firebase.auth();
 
+    // Check auth state and load forms
     auth.onAuthStateChanged(user => {
       if (user) {
         loadForms();
@@ -65,26 +99,22 @@
       }
     });
 
-    // --- UPDATED, MORE ROBUST loadForms function ---
     async function loadForms() {
       const tableBody = document.getElementById('forms-table-body');
-      tableBody.innerHTML = '<tr><td colspan="3">Loading forms from database...</td></tr>';
-      console.log("Attempting to load forms...");
+      tableBody.innerHTML = '<tr><td colspan="3">Loading forms...</td></tr>';
+      
       try {
         const formsSnapshot = await db.collection('forms').get();
-        console.log(`Query successful. Found ${formsSnapshot.size} forms.`);
-
+        
         if (formsSnapshot.empty) {
             tableBody.innerHTML = '<tr><td colspan="3">No forms found. Click "Create New Form" to start.</td></tr>';
             return;
         }
 
-        let allRowsHTML = ''; // Build the HTML in a variable first
-        console.log("Starting to build HTML table rows...");
+        let allRowsHTML = ''; 
         formsSnapshot.forEach(doc => {
             const formData = doc.data();
             const formId = doc.id;
-            console.log(`- Building row for form: ${formData.title}`);
             const row = `
                 <tr>
                     <td><strong>${formData.title || 'Untitled Form'}</strong></td>
@@ -92,16 +122,14 @@
                     <td><a href="edit_form.html?id=${formId}" class="btn-edit">Edit</a></td>
                 </tr>
             `;
-            allRowsHTML += row; // Add the row to our variable
+            allRowsHTML += row;
         });
 
-        console.log("Finished building HTML. Updating the table now.");
-        tableBody.innerHTML = allRowsHTML; // Update the table only ONCE at the end
-        console.log("Table updated successfully!");
+        tableBody.innerHTML = allRowsHTML;
 
       } catch (error) {
         console.error("A critical error occurred while loading forms:", error);
-        tableBody.innerHTML = '<tr><td colspan="3">Error loading forms. Check console for details.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="3">Error loading forms. Check console (F12) and security rules.</td></tr>';
       }
     }
   </script>
