@@ -2,87 +2,77 @@ const express = require('express');
 const cors = require('cors');
 const { GoogleAuth } = require('google-auth-library');
 const { google } = require('googleapis');
-// We are not using Gemini in the SHS form, so we can remove this for now
-// const { GoogleGenerativeAI } = require('@google/generative-ai'); 
+const multer = require('multer');
+const stream = require('stream');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Use multer to handle file uploads in memory
+const upload = multer({ storage: multer.memoryStorage() });
+
 app.use(cors());
 app.use(express.json());
 
-// This function is fine
-async function getSheetsService() {
-  const auth = new GoogleAuth({
-    credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
-    scopes: 'https://www.googleapis.com/auth/spreadsheets',
-  });
-  return google.sheets({ version: 'v4', auth });
+// This helper function is fine
+async function getGoogleService(credentials, scopes) {
+  const auth = new GoogleAuth({ credentials, scopes });
+  return auth;
 }
 
-
-// === UPDATED /submit-shs Endpoint with Heavy Logging ===
-app.post('/submit-shs', async (req, res) => {
-  console.log("--- New SHS form submission request received ---");
+// === NEW: Endpoint to handle file uploads with Heavy Logging ===
+app.post('/upload-file', upload.single('file'), async (req, res) => {
+  console.log("--- New file upload request received ---");
   try {
-    const studentData = req.body;
-    console.log("Step 1: Received form data:", studentData);
-
-    // --- Part 1: Save data to Google Sheets ---
-    try {
-      console.log("Step 2: Authenticating with Google Sheets service...");
-      const sheets = await getSheetsService();
-      console.log("Step 3: Authentication successful. Preparing data row...");
-      
-      const newRow = [
-        new Date().toISOString(),
-        studentData.hhId || '', studentData.lastName || '', studentData.firstName || '',
-        studentData.middleName || '', studentData.extName || '', studentData.birthday || '',
-        studentData.sex || '', studentData.civilStatus || '', studentData.ipAffiliation || '',
-        studentData.disability || '', studentData.attendingSchool || '', studentData.gradeLevel || '',
-        studentData.track || '', studentData.strand || '', studentData.curriculumExit || ''
-      ];
-      console.log("Step 4: Data row prepared. Attempting to append to sheet...");
-
-      await sheets.spreadsheets.values.append({
-        spreadsheetId: process.env.SPREADSHEET_ID,
-        range: 'Sheet1!A1',
-        valueInputOption: 'USER_ENTERED',
-        resource: {
-          values: [newRow],
-        },
-      });
-      console.log("Step 5: Data successfully saved to Google Sheet.");
-
-    } catch (sheetError) {
-      console.error("--- ERROR during Google Sheets operation ---", sheetError);
-      // Even if sheets fail, we will still send a response to the user
+    if (!req.file) {
+      console.error("Step 1 Error: No file was received by the server.");
+      return res.status(400).send('No file uploaded.');
     }
+    console.log(`Step 1: File received successfully: ${req.file.originalname}, Size: ${req.file.size} bytes`);
 
-    // --- Part 2: Prepare Final Response ---
-    console.log("Step 6: Preparing success response for the user.");
-    const responseMessage = "Data saved to Google Sheet successfully.";
+    console.log("Step 2: Authenticating with Google Drive service...");
+    const auth = await getGoogleService(
+      JSON.parse(process.env.GOOGLE_CREDENTIALS),
+      ['https://www.googleapis.com/auth/drive.file']
+    );
+    const drive = google.drive({ version: 'v3', auth });
+    console.log("Step 3: Authentication successful.");
 
-    // --- Part 3: Send response back to browser ---
-    res.status(200).json({
-        message: responseMessage,
-        aiProfile: "AI processing is not active for this form." 
+    const folderId = process.env.DRIVE_FOLDER_ID;
+    console.log(`Step 4: Preparing to upload file to Drive Folder ID: ${folderId}`);
+    if (!folderId) {
+        throw new Error("DRIVE_FOLDER_ID environment variable is not set.");
+    }
+    
+    const bufferStream = new stream.PassThrough();
+    bufferStream.end(req.file.buffer);
+
+    console.log("Step 5: Calling the Google Drive API to create the file...");
+    const { data } = await drive.files.create({
+      media: {
+        mimeType: req.file.mimetype,
+        body: bufferStream,
+      },
+      requestBody: {
+        name: req.file.originalname,
+        parents: [folderId],
+      },
+      fields: 'id,name',
     });
+
+    console.log(`Step 6: File uploaded successfully to Google Drive. File ID: ${data.id}`);
+    res.status(200).json({ success: true, message: `File "${data.name}" uploaded successfully.` });
     console.log("Step 7: Success response sent to user. Request finished.");
 
   } catch (error) {
-    console.error("--- CRITICAL ERROR in /submit-shs endpoint ---", error);
-    res.status(500).send({ error: 'A critical error occurred on the server.' });
+    console.error('--- CRITICAL ERROR during file upload ---', error);
+    res.status(500).json({ success: false, error: 'Error uploading file to Google Drive.' });
   }
 });
 
 
-// All other endpoints and the app.listen part remain the same
+// Your other endpoints (submit-shs, create-headers, etc.) remain here, unchanged.
 // ...
-
-app.get('/', (req, res) => {
-  res.send('DSWD Case Management AI Server is running.');
-});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
