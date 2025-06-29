@@ -3,54 +3,76 @@ const cors = require('cors');
 const { GoogleAuth } = require('google-auth-library');
 const { google } = require('googleapis');
 const multer = require('multer');
-// ... other requires
+const stream = require('stream');
+// We absolutely need firebase-admin to read the form definitions
+const admin = require('firebase-admin');
 
 const app = express();
-// ... app.use calls
+const PORT = process.env.PORT || 3000;
 
-// --- All your other endpoints like /upload-file can remain ---
+app.use(cors());
+app.use(express.json());
 
-// === THE NEW, SMART, DYNAMIC SUBMISSION ENDPOINT ===
+// --- CORRECT INITIALIZATION ---
+// This uses the credentials to initialize BOTH Firebase and other Google Services
+const serviceAccount = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+const db = admin.firestore();
+
+// --- All other working endpoints can stay ---
+// ... (/upload-file, etc.)
+
+// === THE FINAL, STABLE, DYNAMIC SUBMISSION ENDPOINT ===
 app.post('/submit-form', async (req, res) => {
   console.log("--- New DYNAMIC form submission request ---");
   try {
-    // We receive the full payload from the browser
-    const { spreadsheetId, headers, submissionData } = req.body;
-
-    if (!spreadsheetId || !headers || !submissionData) {
-      return res.status(400).json({ success: false, error: 'Incomplete data received.' });
+    const { formId, submissionData } = req.body;
+    if (!formId || !submissionData) {
+      return res.status(400).json({ success: false, error: 'Missing formId or submission data.' });
     }
+    console.log(`Processing submission for form ID: ${formId}`);
+
+    // 1. Fetch the form's structure from our Firestore database
+    const formDoc = await db.collection('forms').doc(formId).get();
+    if (!formDoc.exists) {
+      return res.status(404).json({ success: false, error: 'Form definition not found in database.' });
+    }
+    const formDef = formDoc.data();
+    const spreadsheetId = formDef.spreadsheetId;
     console.log(`Targeting Spreadsheet ID: ${spreadsheetId}`);
 
-    // Dynamically create the data row IN THE CORRECT ORDER
-    // by looping through the headers definition we received.
-    const dataRow = headers.map(header => submissionData[header.name] || '');
+    // 2. Dynamically create the data row IN THE CORRECT ORDER
+    const headers = formDef.fields.map(field => field.label);
+    const dataRow = formDef.fields.map(field => submissionData[field.name] || '');
+    console.log('Ordered Data Row:', dataRow);
 
-    console.log('Final Ordered Data Row:', dataRow);
-
-    // Connect to Google Sheets
-    const authClient = await getGoogleAuthClient(['https://www.googleapis.com/auth/spreadsheets']);
-    const sheets = google.sheets({ version: 'v4', auth: authClient });
+    // 3. Connect to Google Sheets using the same credentials
+    const auth = new GoogleAuth({
+        credentials: serviceAccount,
+        scopes: 'https://www.googleapis.com/auth/spreadsheets',
+    });
+    const sheets = google.sheets({ version: 'v4', auth });
     
-    // Check if headers exist. If not, create them.
+    // 4. Check if headers exist. If not, create them.
     const headerCheck = await sheets.spreadsheets.values.get({ spreadsheetId, range: 'Sheet1!A1:Z1' });
     if (!headerCheck.data.values || headerCheck.data.values.length === 0) {
         console.log("Sheet has no headers. Creating them now...");
-        const headerRow = ['Timestamp', ...headers.map(h => h.label)];
         await sheets.spreadsheets.values.update({
             spreadsheetId,
             range: 'Sheet1!A1',
             valueInputOption: 'USER_ENTERED',
-            resource: { values: [headerRow] },
+            resource: { values: [['Timestamp', ...headers]] },
         });
     }
 
-    // Append the new data row (with timestamp added at the front)
+    // 5. Append the new data row
     await sheets.spreadsheets.values.append({
         spreadsheetId,
         range: 'Sheet1!A1',
         valueInputOption: 'USER_ENTERED',
-        resource: { values: [ [new Date().toISOString(), ...dataRow] ] },
+        resource: { values: [[new Date().toISOString(), ...dataRow]] },
     });
 
     console.log("Success! Data saved to Google Sheet correctly.");
@@ -62,4 +84,6 @@ app.post('/submit-form', async (req, res) => {
   }
 });
 
-// ... app.listen and other routes
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
