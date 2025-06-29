@@ -8,8 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    /* This is the full, modern CSS from your other pages */
-    :root { --primary-red: #9b1c20; --dark-red: #7e161a; --accent-gold: #ffc107; --light-gray: #f4f7f6; --text-dark: #333333; --text-light: #ffffff; --border-color: #e0e0e0; }
+    :root { --primary-red: #9b1c20; --dark-red: #7e161a; --accent-gold: #ffc107; --light-gray: #f4f7f6; --text-dark: #333333; --text-light: #ffffff; --border-color: #e0e0e0; --blue: #3498db; }
     body { font-family: 'Inter', sans-serif; background-color: var(--light-gray); margin: 0; color: var(--text-dark); }
     .page-container { display: flex; }
     .sidebar { width: 250px; background-color: var(--primary-red); height: 100vh; position: fixed; left: 0; top: 0; transition: transform 0.3s ease; }
@@ -21,13 +20,16 @@
     .header-bar { display: none; justify-content: space-between; align-items: center; background: var(--text-light); padding: 10px 20px; border-bottom: 1px solid var(--border-color); }
     .menu-toggle { font-size: 28px; cursor: pointer; background: none; border: none; }
     h2 { color: var(--primary-red); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 0; }
-    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
     .btn-create { background-color: var(--primary-red); color: var(--text-light); padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; transition: background-color 0.2s; }
     .btn-create:hover { background-color: var(--dark-red); }
     .form-list-table { width: 100%; border-collapse: collapse; background-color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
     .form-list-table th, .form-list-table td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
     .form-list-table th { background-color: var(--light-gray); font-weight: 600; }
-    .btn-edit { background-color: var(--accent-gold); color: var(--text-dark); padding: 6px 12px; text-decoration: none; border-radius: 5px; font-size: 14px; }
+    .actions-cell button, .actions-cell a { margin-right: 8px; font-family: 'Inter', sans-serif; }
+    .btn-edit { background-color: var(--accent-gold); color: var(--text-dark); padding: 6px 12px; text-decoration: none; border-radius: 5px; font-size: 14px; border: none; cursor: pointer; font-weight: 600; }
+    .btn-clone { background-color: var(--blue); color: white; padding: 6px 12px; text-decoration: none; border-radius: 5px; font-size: 14px; border: none; cursor: pointer; font-weight: 600;}
+    .btn-remove { background-color: #dc3545; color: white; padding: 6px 12px; text-decoration: none; border-radius: 5px; font-size: 14px; border: none; cursor: pointer; font-weight: 600;}
     @media screen and (max-width: 768px) { .sidebar { transform: translateX(-100%); z-index: 1000; } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; padding: 20px; } .header-bar { display: flex; } .admin-header { flex-direction: column; align-items: flex-start; } .btn-create { margin-top: 15px; width: 100%; text-align: center; box-sizing: border-box;} }
   </style>
 </head>
@@ -53,7 +55,7 @@
             <a href="edit_form.html" class="btn-create">+ Create New Form</a>
         </div>
         
-        <p>Here you can view, edit, and manage all of the forms for your application.</p>
+        <p>Here you can view, edit, clone, and manage all of the forms for your application.</p>
         
         <table class="form-list-table">
             <thead>
@@ -64,7 +66,7 @@
                 </tr>
             </thead>
             <tbody id="forms-table-body">
-                <tr><td colspan="3">Loading forms from database...</td></tr>
+                <tr><td colspan="3" style="text-align: center; padding: 20px;">Loading forms...</td></tr>
             </tbody>
         </table>
     </div>
@@ -75,12 +77,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
   <script>
-    // Mobile Menu
     document.getElementById('menu-toggle').addEventListener('click', () => {
       document.getElementById('sidebar').classList.toggle('open');
     });
 
-    // Firebase Init
     const firebaseConfig = {
         apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
         authDomain: "casemanagement-project.firebaseapp.com",
@@ -90,7 +90,6 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // Check auth state and load forms
     auth.onAuthStateChanged(user => {
       if (user) {
         loadForms();
@@ -101,35 +100,66 @@
 
     async function loadForms() {
       const tableBody = document.getElementById('forms-table-body');
-      tableBody.innerHTML = '<tr><td colspan="3">Loading forms...</td></tr>';
-      
+      tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Loading forms...</td></tr>';
       try {
-        const formsSnapshot = await db.collection('forms').get();
-        
+        const formsSnapshot = await db.collection('forms').orderBy('title').get();
         if (formsSnapshot.empty) {
-            tableBody.innerHTML = '<tr><td colspan="3">No forms found. Click "Create New Form" to start.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">No forms found. Click "Create New Form" to start.</td></tr>';
             return;
         }
 
-        let allRowsHTML = ''; 
+        tableBody.innerHTML = '';
         formsSnapshot.forEach(doc => {
             const formData = doc.data();
             const formId = doc.id;
-            const row = `
-                <tr>
-                    <td><strong>${formData.title || 'Untitled Form'}</strong></td>
-                    <td>${formData.description || 'No description.'}</td>
-                    <td><a href="edit_form.html?id=${formId}" class="btn-edit">Edit</a></td>
-                </tr>
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${formData.title || 'Untitled Form'}</strong></td>
+                <td>${formData.description || 'No description.'}</td>
+                <td class="actions-cell">
+                    <button class="btn-clone" onclick="cloneForm('${formId}')">Clone</button>
+                    <a href="edit_form.html?id=${formId}" class="btn-edit">Edit</a>
+                    <button class="btn-remove" onclick="deleteForm('${formId}')">Delete</button>
+                </td>
             `;
-            allRowsHTML += row;
+            tableBody.appendChild(row);
         });
-
-        tableBody.innerHTML = allRowsHTML;
-
       } catch (error) {
-        console.error("A critical error occurred while loading forms:", error);
-        tableBody.innerHTML = '<tr><td colspan="3">Error loading forms. Check console (F12) and security rules.</td></tr>';
+        console.error("Error loading forms:", error);
+        tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Error loading forms. Check console.</td></tr>';
+      }
+    }
+
+    async function cloneForm(formId) {
+        if (!confirm('Are you sure you want to create a copy of this form?')) return;
+        try {
+            const originalDocRef = db.collection('forms').doc(formId);
+            const doc = await originalDocRef.get();
+            if (doc.exists) {
+                const dataToClone = doc.data();
+                dataToClone.title += " (Copy)";
+                await db.collection('forms').add(dataToClone);
+                alert('Form cloned successfully! You can now edit the new copy.');
+                loadForms();
+            } else {
+                alert('Could not find the original form to clone.');
+            }
+        } catch (error) {
+            console.error("Error cloning form:", error);
+            alert("An error occurred while cloning the form.");
+        }
+    }
+
+    async function deleteForm(formId) {
+      if (confirm(`Are you sure you want to permanently delete this form? This cannot be undone.`)) {
+        try {
+          await db.collection('forms').doc(formId).delete();
+          alert("Form deleted successfully!");
+          loadForms();
+        } catch (error) {
+          console.error("Error deleting form:", error);
+          alert("Error deleting form.");
+        }
       }
     }
   </script>

@@ -3,25 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Edit Form | DSWD CM Tool</title>
+  <title>Form Editor | DSWD CM Tool</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <style>
-    /* All your modern CSS goes here */
+    :root { --primary-red: #9b1c20; --dark-red: #7e161a; --accent-gold: #ffc107; --light-gray: #f4f7f6; --text-dark: #333333; --text-light: #ffffff; --border-color: #e0e0e0; }
+    body { font-family: 'Inter', sans-serif; background-color: var(--light-gray); margin: 0; color: var(--text-dark); }
+    .page-container { display: flex; }
+    .sidebar { width: 250px; background-color: var(--primary-red); height: 100vh; position: fixed; left: 0; top: 0; transition: transform 0.3s ease; z-index: 1001; }
+    .sidebar .header { padding: 20px; background-color: var(--dark-red); color: var(--text-light); font-size: 20px; font-weight: 700; text-align: center; }
+    .sidebar a { display: block; color: var(--text-light); padding: 18px 20px; text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--dark-red); }
+    .sidebar a.active { background-color: var(--accent-gold); color: var(--text-dark); }
+    .sidebar a:hover:not(.active) { background-color: var(--dark-red); }
+    .main-content { flex-grow: 1; margin-left: 250px; padding: 30px; transition: margin-left 0.3s ease; }
+    .header-bar { display: none; }
+    h2, h3 { color: var(--primary-red); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 0; }
+    h3 { margin-top: 30px; border-bottom-style: dashed; }
+    label { display: block; margin-top: 20px; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+    input, textarea { width: 100%; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid var(--border-color); box-sizing: border-box; background-color: #fff; font-family: 'Inter', sans-serif; }
+    .btn-save { background-color: #28a745; color: var(--text-light); padding: 14px; border: none; border-radius: 6px; margin-top: 30px; cursor: pointer; font-weight: 600; width: 100%; font-size: 16px; }
+    .toolbox button { background-color: var(--primary-red); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: 10px; margin-bottom: 10px; }
+    .field-list { list-style: none; padding: 0; margin-top: 20px; }
+    .field-item { background: var(--light-gray); padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); cursor: grab; }
+    .field-item:active { cursor: grabbing; background-color: #e0e0e0; }
+    .field-item span { font-weight: 600; }
+    .btn-remove-field { background-color: #dc3545; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer; }
+    @media screen and (max-width: 768px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; } }
   </style>
 </head>
 <body>
   <div class="page-container">
     <div class="sidebar" id="sidebar">
-        </div>
-
+        <div class="header">DSWD CM Tool</div>
+        <a href="index.html">🏠 Dashboard</a>
+        <a href="forms.html">📝 Fill Out a Form</a>
+        <a href="upload.html">📤 Upload Files</a>
+        <a href="admin.html" class="active">⚙️ Admin Panel</a>
+        <a href="login.html">🔒 Login</a>
+    </div>
     <div class="main-content">
-        <header class="header-bar">
-            </header>
-        
         <div class="form-wrapper">
-            <h2 id="page-title">Create New Form</h2>
+            <h2 id="page-title">Loading...</h2>
             <form id="form-editor">
                 <div>
                     <label for="formTitle">Form Title</label>
@@ -35,7 +59,17 @@
                     <label for="spreadsheetId">Google Sheet ID</label>
                     <input type="text" id="spreadsheetId" required placeholder="Paste the ID from your Google Sheet URL here...">
                 </div>
-                <button type="submit" class="btn-save">Save Form Details</button>
+                <div class="field-editor">
+                    <hr>
+                    <h3>Form Fields (Drag to reorder)</h3>
+                    <div class="toolbox">
+                        <button type="button" onclick="addField('text')">+ Text</button>
+                        <button type="button" onclick="addField('date')">+ Date</button>
+                        <button type="button" onclick="addField('select')">+ Dropdown</button>
+                    </div>
+                    <ul id="field-list"></ul>
+                </div>
+                <button type="submit" class="btn-save">Save Entire Form</button>
             </form>
             <div id="status"></div>
         </div>
@@ -46,8 +80,124 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script>
-    // The complete JavaScript from the previous step goes here
-    // including the onAuthStateChanged and loadFormData functions with logging
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- All variables are now safely declared after the page loads ---
+        const formEditor = document.getElementById('form-editor');
+        const statusDiv = document.getElementById('status');
+        const pageTitle = document.getElementById('page-title');
+        const formTitleInput = document.getElementById('formTitle');
+        const formDescriptionInput = document.getElementById('formDescription');
+        const spreadsheetIdInput = document.getElementById('spreadsheetId');
+        const fieldListUI = document.getElementById('field-list');
+        let currentFormId = null;
+        let localFields = [];
+        let sortable = new Sortable(fieldListUI, {
+            animation: 150,
+            onEnd: (evt) => {
+                const item = localFields.splice(evt.oldIndex, 1)[0];
+                localFields.splice(evt.newIndex, 0, item);
+            }
+        });
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
+            authDomain: "casemanagement-project.firebaseapp.com",
+            projectId: "casemanagement-project"
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const params = new URLSearchParams(window.location.search);
+                currentFormId = params.get('id');
+                if (currentFormId) {
+                    pageTitle.textContent = 'Edit Form';
+                    loadFormData();
+                } else {
+                    pageTitle.textContent = 'Create New Form';
+                }
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        async function loadFormData() {
+            try {
+                const doc = await db.collection('forms').doc(currentFormId).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    formTitleInput.value = data.title || '';
+                    formDescriptionInput.value = data.description || '';
+                    spreadsheetIdInput.value = data.spreadsheetId || '';
+                    localFields = data.fields || [];
+                    renderFieldsList();
+                } else {
+                    statusDiv.textContent = "Error: Form not found.";
+                }
+            } catch (error) {
+                console.error("Error loading form data:", error);
+                statusDiv.textContent = "Error loading form data.";
+            }
+        }
+
+        window.renderFieldsList = function() {
+            fieldListUI.innerHTML = '';
+            localFields.forEach((field, index) => {
+                const li = document.createElement('li');
+                li.className = 'field-item';
+                li.innerHTML = `<span>${field.label} <em>(${field.type})</em></span> <button type="button" class="btn-remove-field" onclick="removeField(${index})">Delete</button>`;
+                fieldListUI.appendChild(li);
+            });
+        }
+
+        window.addField = function(type) {
+            const label = prompt(`Enter the label for the new ${type} field:`);
+            if (!label || !label.trim()) return;
+
+            const name = label.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+            const newField = { type, label: label.trim(), name, required: true };
+
+            if (type === 'select') {
+                const optionsStr = prompt("Enter dropdown options, separated by a comma (e.g. Yes,No,Maybe)");
+                newField.options = optionsStr ? optionsStr.split(',').map(s => s.trim()) : [];
+            }
+            localFields.push(newField);
+            renderFieldsList();
+        }
+
+        window.removeField = function(index) {
+            if (confirm(`Are you sure you want to remove the field "${localFields[index].label}"?`)) {
+                localFields.splice(index, 1);
+                renderFieldsList();
+            }
+        }
+
+        formEditor.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formDataToSave = {
+                title: formTitleInput.value,
+                description: formDescriptionInput.value,
+                spreadsheetId: spreadsheetIdInput.value,
+                fields: localFields
+            };
+            statusDiv.textContent = 'Saving...';
+            try {
+                if (currentFormId) {
+                    await db.collection('forms').doc(currentFormId).set(formDataToSave);
+                    statusDiv.textContent = '✅ Form updated successfully!';
+                } else {
+                    const newDocRef = await db.collection('forms').add(formDataToSave);
+                    statusDiv.textContent = '✅ New form created successfully!';
+                    window.location.href = `edit_form.html?id=${newDocRef.id}`;
+                }
+            } catch (error) {
+                console.error("Error saving form:", error);
+                statusDiv.textContent = '❌ Error saving form.';
+            }
+        });
+    });
   </script>
 </body>
 </html>
