@@ -4,62 +4,90 @@ const { GoogleAuth } = require('google-auth-library');
 const { google } = require('googleapis');
 const multer = require('multer');
 const stream = require('stream');
-// We do not need firebase-admin on the server for this setup
-// const admin = require('firebase-admin');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(express.json());
 
-// --- All your other code for multer, file uploads, etc. remains here ---
-// ...
-
-// We will keep the generic /submit-form endpoint, but we cannot
-// read the form definition from Firestore on the server without Firebase Admin.
-// We will go back to a slightly less dynamic, but more stable approach for now.
-app.post('/submit-shs', async (req, res) => {
-  console.log("--- New SHS form submission request (Stable Version) ---");
+// This helper function is stable and works for all Google services
+async function getGoogleAuthClient(scopes) {
   try {
-    const studentData = req.body;
-    console.log("Received form data for sheet.");
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    const auth = new GoogleAuth({ credentials, scopes });
+    return auth.getClient();
+  } catch (error) {
+    console.error('FATAL: Could not parse GOOGLE_CREDENTIALS. Check the environment variable on Render.', error);
+    throw new Error('Authentication setup failed.');
+  }
+}
 
-    // Connect to Google Sheets using GoogleAuth
-    const auth = new GoogleAuth({
-        credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
-        scopes: 'https://www.googleapis.com/auth/spreadsheets',
+// === STABLE ENDPOINT FOR ALL FORM SUBMISSIONS ===
+app.post('/submit-form', async (req, res) => {
+  console.log("--- Received a new form submission ---");
+  try {
+    const { submissionData, spreadsheetId, headers } = req.body;
+
+    if (!submissionData || !spreadsheetId || !headers) {
+      console.error("Missing submissionData, spreadsheetId, or headers.");
+      return res.status(400).json({ success: false, error: 'Incomplete request from the website.' });
+    }
+
+    console.log(`Targeting Spreadsheet ID: ${spreadsheetId}`);
+
+    // Dynamically create the data row in the correct order based on the headers
+    const dataRow = headers.map(header => submissionData[header.name] || '');
+    console.log('Formatted Data Row:', dataRow);
+
+    // Connect to Google Sheets
+    const authClient = await getGoogleAuthClient(['https://www.googleapis.com/auth/spreadsheets']);
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
+
+    // Check if headers exist, if not, create them
+    const headerCheck = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: 'Sheet1!1:1',
     });
-    const sheets = google.sheets({ version: 'v4', auth });
-
-    // We go back to the hardcoded row order that we know works.
-    // This assumes the form submitted is the SHS form.
-    const newRow = [
-      new Date().toISOString(), studentData.hhId || '', studentData.lastName || '', studentData.firstName || '',
-      studentData.middleName || '', studentData.extName || '', studentData.birthday || '',
-      studentData.sex || '', studentData.civilStatus || '', studentData.ipAffiliation || '',
-      studentData.disability || '', studentData.attendingSchool || '', studentData.gradeLevel || '',
-      studentData.track || '', studentData.strand || '', studentData.curriculumExit || ''
-    ];
     
-    console.log("Data row prepared. Appending to sheet...");
+    if (!headerCheck.data.values || headerCheck.data.values.length === 0) {
+        console.log("No headers found. Creating them...");
+        const headerRow = ['Timestamp', ...headers.map(h => h.label)];
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: 'Sheet1!A1',
+            valueInputOption: 'USER_ENTERED',
+            resource: { values: [headerRow] },
+        });
+    }
 
+    // Append the new data row
     await sheets.spreadsheets.values.append({
-        spreadsheetId: process.env.SPREADSHEET_ID, // This still reads the ID from your environment
+        spreadsheetId,
         range: 'Sheet1!A1',
         valueInputOption: 'USER_ENTERED',
-        resource: { values: [newRow] },
+        resource: { values: [ [new Date().toISOString(), ...dataRow] ] },
     });
 
-    console.log("Success! Data saved to Google Sheet correctly.");
+    console.log("Success! Data saved to Google Sheet.");
     res.status(200).json({ success: true, message: 'Your submission has been saved.' });
 
   } catch (error) {
-    console.error('--- CRITICAL ERROR in /submit-shs endpoint ---', error);
-    res.status(500).json({ success: false, error: 'A critical error occurred on the server.' });
+    console.error('--- ERROR in /submit-form endpoint ---', error);
+    res.status(500).json({ success: false, error: 'A server error occurred.' });
   }
 });
 
 
-// All other endpoints and app.listen remain the same
-app.listen(process.env.PORT || 3000, () => {
-  console.log('Server is running.');
+// All your other working endpoints like /upload-file can remain here.
+// ...
+
+
+// Root URL to confirm server is running
+app.get('/', (req, res) => {
+  res.send('Case Management Server is live and running.');
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
