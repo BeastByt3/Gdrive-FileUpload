@@ -81,6 +81,22 @@
           firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.firestore();
+
+        const locationData = {
+            "IV-A": {
+                "Batangas": ["Agoncillo", "Alitagtag", "Balayan", "Balete", "Batangas City", "Bauan", "Calaca", "Calatagan", "Cuenca", "Ibaan", "Laurel", "Lemery", "Lian", "Lipa", "Lobo", "Mabini", "Malvar", "Mataasnakahoy", "Nasugbu", "Padre Garcia", "Rosario", "San Jose", "San Juan", "San Luis", "San Nicolas", "San Pascual", "Santa Teresita", "Santo Tomas", "Taal", "Talisay", "Tanauan", "Taysan", "Tingloy", "Tuy"],
+                "Cavite": ["Alfonso", "Amadeo", "Bacoor", "Carmona", "Cavite City", "Dasmariñas", "General Emilio Aguinaldo", "General Mariano Alvarez", "General Trias", "Imus", "Indang", "Kawit", "Magallanes", "Maragondon", "Mendez", "Naic", "Noveleta", "Rosario", "Silang", "Tagaytay", "Tanza", "Ternate", "Trece Martires"],
+                "Laguna": ["Alaminos", "Bay", "Biñan", "Cabuyao", "Calamba", "Calauan", "Cavinti", "Famy", "Kalayaan", "Liliw", "Los Baños", "Luisiana", "Lumban", "Mabitac", "Magdalena", "Majayjay", "Nagcarlan", "Paete", "Pagsanjan", "Pakil", "Pangil", "Pila", "Rizal", "San Pablo", "San Pedro", "Santa Cruz", "Santa Maria", "Santa Rosa", "Siniloan", "Victoria"],
+                "Quezon": ["Agdangan", "Alabat", "Atimonan", "Buenavista", "Burdeos", "Calauag", "Candelaria", "Catanauan", "Dolores", "General Luna", "General Nakar", "Guinayangan", "Gumaca", "Infanta", "Jomalig", "Lopez", "Lucban", "Lucena", "Macalelon", "Mauban", "Mulanay", "Padre Burgos", "Pagbilao", "Panukulan", "Patnanungan", "Perez", "Pitogo", "Plaridel", "Polillo", "Quezon", "Real", "Sampaloc", "San Andres", "San Antonio", "San Francisco", "San Narciso", "Sariaya", "Tagkawayan", "Tayabas", "Tiaong", "Unisan"],
+                "Rizal": ["Angono", "Antipolo", "Baras", "Binangonan", "Cainta", "Cardona", "Jalajala", "Morong", "Pililla", "Rodriguez", "San Mateo", "Tanay", "Taytay", "Teresa"]
+            }
+        };
+        const strandData = {
+            "Academic": ["STEM", "ABM", "HUMSS", "GAS"],
+            "TVL": ["Agri-Fishery Arts", "Home Economics", "Industrial Arts", "Information and Communications Technology (ICT)", "TVL Maritime"],
+            "Arts and Design": ["Arts and Design"],
+            "Sports": ["Sports"]
+        };
         
         let currentFormId = null;
         let currentFormFields = [];
@@ -155,6 +171,63 @@
                 submitButton.textContent = 'Submit Form';
                 formContainer.appendChild(submitButton);
 
+                const regionSelect = formContainer.querySelector('select[name="region"]');
+                const provinceSelect = formContainer.querySelector('select[name="province"]');
+                const citySelect = formContainer.querySelector('select[name="city"]');
+                const trackSelect = formContainer.querySelector('select[name="track"]');
+                const strandSelect = formContainer.querySelector('select[name="strand"]');
+
+                if (provinceSelect) provinceSelect.disabled = true;
+                if (citySelect) citySelect.disabled = true;
+                if (strandSelect) strandSelect.disabled = true;
+
+                if (regionSelect) {
+                    regionSelect.addEventListener('change', (event) => {
+                        const selectedRegion = event.target.value;
+                        const provinces = locationData[selectedRegion] ? Object.keys(locationData[selectedRegion]).sort() : [];
+                        provinceSelect.innerHTML = '<option value="">Select Province...</option>';
+                        provinces.forEach(prov => {
+                            const option = document.createElement('option');
+                            option.value = prov;
+                            option.textContent = prov;
+                            provinceSelect.appendChild(option);
+                        });
+                        provinceSelect.disabled = false;
+                        citySelect.innerHTML = '<option value="">Select City/Municipality...</option>';
+                        citySelect.disabled = true;
+                    });
+                }
+
+                if (provinceSelect) {
+                    provinceSelect.addEventListener('change', (event) => {
+                        const selectedRegion = regionSelect.value;
+                        const selectedProvince = event.target.value;
+                        const cities = locationData[selectedRegion]?.[selectedProvince]?.sort() || [];
+                        citySelect.innerHTML = '<option value="">Select City/Municipality...</option>';
+                        cities.forEach(city => {
+                            const option = document.createElement('option');
+                            option.value = city;
+                            option.textContent = city;
+                            citySelect.appendChild(option);
+                        });
+                        citySelect.disabled = false;
+                    });
+                }
+
+                if (trackSelect) {
+                    trackSelect.addEventListener('change', (event) => {
+                        const selectedTrack = event.target.value;
+                        const strands = strandData[selectedTrack] || [];
+                        strandSelect.innerHTML = '<option value="">Select Strand...</option>';
+                        strands.forEach(s => {
+                            const option = document.createElement('option');
+                            option.value = s;
+                            option.textContent = s;
+                            strandSelect.appendChild(option);
+                        });
+                        strandSelect.disabled = false;
+                    });
+                }
             } catch (error) {
                 console.error("Error rendering form:", error);
                 formTitle.innerText = "Error loading form.";
@@ -174,7 +247,7 @@
             };
             
             if (!payload.spreadsheetId) {
-                alert("Error: Spreadsheet ID is missing. Cannot submit.");
+                alert("Error: Spreadsheet ID is missing from the form definition. Cannot submit.");
                 return;
             }
 

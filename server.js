@@ -9,66 +9,117 @@ const admin = require('firebase-admin');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// --- INITIALIZATION ---
+// --- MIDDLEWARE ---
 app.use(cors());
-app.use(express.json()); // <--- THIS IS THE MISSING LINE THAT FIXES THE BUG
+app.use(express.json());
 
-const serviceAccount = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+// --- INITIALIZATION ---
+try {
+    const serviceAccount = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log("Firebase Admin initialized successfully.");
+} catch (e) {
+    console.error("FATAL ERROR: Could not initialize Firebase Admin. Check GOOGLE_CREDENTIALS environment variable.", e);
+}
 const db = admin.firestore();
 
 
-// --- ALL YOUR ENDPOINTS ---
+// --- HELPER FUNCTION ---
+async function getGoogleAuthClient(scopes) {
+  const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+  const auth = new GoogleAuth({ credentials, scopes });
+  return auth.getClient();
+}
+
+
+// --- ROUTES ---
+
+// Root URL to confirm server is running
+app.get('/', (req, res) => {
+  res.send('Case Management Server is live and running.');
+});
+
 
 // File Upload Endpoint
 app.post('/upload-file', multer({ storage: multer.memoryStorage() }).single('file'), async (req, res) => {
-    // ... your working file upload code here ...
+  console.log("--- New file upload request ---");
+  try {
+    if (!req.file) {
+      console.log("Upload failed: No file found in request.");
+      return res.status(400).send('No file uploaded.');
+    }
+    console.log(`Receiving file: ${req.file.originalname}`);
+
+    const authClient = await getGoogleAuthClient(['https://www.googleapis.com/auth/drive.file']);
+    const drive = google.drive({ version: 'v3', auth: authClient });
+    
+    const bufferStream = new stream.PassThrough().end(req.file.buffer);
+
+    const { data } = await drive.files.create({
+      media: { mimeType: req.file.mimetype, body: bufferStream },
+      requestBody: { name: req.file.originalname, parents: [process.env.DRIVE_FOLDER_ID] },
+      fields: 'id,name',
+    });
+
+    console.log(`Success! Uploaded File ID: ${data.id}`);
+    res.status(200).json({ success: true, message: `File "${data.name}" uploaded successfully.` });
+  } catch (error) {
+    console.error('--- ERROR during file upload ---', error);
+    res.status(500).json({ success: false, error: 'Error uploading file to Google Drive.' });
+  }
 });
+
 
 // Dynamic Form Submission Endpoint
 app.post('/submit-form', async (req, res) => {
   console.log("--- New DYNAMIC form submission request ---");
   try {
-    // This line was failing because express.json() was missing
-    const { formId, submissionData, headers } = req.body; 
+    const { formId, submissionData, headers } = req.body;
+    
+    console.log("Step 1: Received Payload:", JSON.stringify(req.body, null, 2));
 
     if (!formId || !submissionData || !headers) {
-      console.error("Incomplete data received by server:", req.body);
-      return res.status(400).json({ success: false, error: 'Missing formId, headers, or submission data.' });
+      console.error("Step 1 FAILED: Missing formId, headers, or submission data.");
+      return res.status(400).json({ success: false, error: 'Incomplete request from the website.' });
     }
-    console.log(`Processing submission for form ID: ${formId}`);
+    console.log(`Step 2: Processing submission for form ID: ${formId}`);
 
+    // Fetch the correct spreadsheet ID from the form definition
     const formDoc = await db.collection('forms').doc(formId).get();
     if (!formDoc.exists) {
+      console.error(`Step 2 FAILED: Form with ID ${formId} not found in Firestore.`);
       return res.status(404).json({ success: false, error: 'Form definition not found in database.' });
     }
-    const formDef = formDoc.data();
-    const spreadsheetId = formDef.spreadsheetId;
+    const spreadsheetId = formDoc.data().spreadsheetId;
+    console.log(`Step 3: Target Spreadsheet ID is ${spreadsheetId}`);
 
-    const dataRow = formDef.fields.map(field => submissionData[field.name] || '');
-    console.log('Ordered Data Row:', dataRow);
+    // Dynamically create the data row in the correct order
+    const dataRow = headers.map(header => submissionData[header.name] || '');
+    console.log('Step 4: Ordered Data Row:', dataRow);
 
-    const auth = new GoogleAuth({
-        credentials: serviceAccount,
-        scopes: 'https://www.googleapis.com/auth/spreadsheets',
-    });
-    const sheets = google.sheets({ version: 'v4', auth });
+    // Connect to Google Sheets
+    const authClient = await getGoogleAuthClient(['https://www.googleapis.com/auth/spreadsheets']);
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
     
-    // Check/Create Headers
-    const headerCheck = await sheets.spreadsheets.values.get({ spreadsheetId, range: 'Sheet1!A1:Z1' });
+    console.log("Step 5: Checking for headers in the sheet...");
+    const headerCheck = await sheets.spreadsheets.values.get({ spreadsheetId, range: 'Sheet1!1:1' });
     if (!headerCheck.data.values || headerCheck.data.values.length === 0) {
-        const headerRow = ['Timestamp', ...formDef.fields.map(h => h.label)];
+        console.log("Step 5a: No headers found. Creating them now...");
+        const headerRow = ['Timestamp', ...headers.map(h => h.label)];
         await sheets.spreadsheets.values.update({
             spreadsheetId,
             range: 'Sheet1!A1',
             valueInputOption: 'USER_ENTERED',
             resource: { values: [headerRow] },
         });
+    } else {
+        console.log("Step 5b: Headers already exist.");
     }
 
-    // Append Data
+    // Append the new data row
+    console.log("Step 6: Appending data to the sheet...");
     await sheets.spreadsheets.values.append({
         spreadsheetId,
         range: 'Sheet1!A1',
@@ -76,20 +127,17 @@ app.post('/submit-form', async (req, res) => {
         resource: { values: [[new Date().toISOString(), ...dataRow]] },
     });
 
-    console.log("Success! Data saved to Google Sheet correctly.");
+    console.log("Step 7: Success! Data saved to Google Sheet correctly.");
     res.status(200).json({ success: true, message: 'Your submission has been saved.' });
 
   } catch (error) {
-    console.error('--- CRITICAL ERROR in /submit-form endpoint ---', error);
-    res.status(500).json({ success: false, error: 'A server error occurred.' });
+    console.error('--- CRITICAL ERROR in /submit-form endpoint ---', error.message);
+    res.status(500).json({ success: false, error: 'A critical server error occurred.' });
   }
 });
 
-// Root URL
-app.get('/', (req, res) => {
-  res.send('Case Management Server is live and running.');
-});
 
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
