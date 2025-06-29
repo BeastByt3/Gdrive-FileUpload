@@ -1,36 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    </head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form | DSWD CM Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* All your professional CSS is here */
+    :root { --primary-red: #9b1c20; /* ... etc ... */ }
+    body { font-family: 'Inter', sans-serif; /* ... */ }
+    /* ... */
+  </style>
+</head>
 <body>
-    <div class="page-container">
-        <div class="main-content">
-            <div class="form-wrapper">
-                <h2 id="form-title">Loading...</h2>
-                <p id="form-description"></p>
-                <form id="dynamic-form"></form>
-                <div id="submit-status"></div>
-            </div>
+  <div class="page-container">
+    <div class="sidebar" id="sidebar">
         </div>
+
+    <div class="main-content">
+      <header class="header-bar">
+        </header>
+      
+      <div class="form-wrapper">
+        <h2 id="form-title">Loading...</h2>
+        <p id="form-description"></p>
+        <form id="dynamic-form"></form>
+        <div id="submit-status"></div>
+      </div>
     </div>
+  </div>
 
-    <script>
-        // ... (All the existing JavaScript for rendering the form is the same) ...
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
-        // === FINAL, UPDATED SUBMISSION LOGIC ===
+  <script>
+    // === We now wrap everything in this listener ===
+    document.addEventListener('DOMContentLoaded', () => {
+        const formContainer = document.getElementById('dynamic-form');
+        const statusDiv = document.getElementById('submit-status');
+        
+        // Mobile Menu Script
+        document.getElementById('menu-toggle').addEventListener('click', () => {
+          document.getElementById('sidebar').classList.toggle('open');
+        });
+
+        // Firebase Init
+        const firebaseConfig = {
+          apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
+          authDomain: "casemanagement-project.firebaseapp.com",
+          projectId: "casemanagement-project"
+        };
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
+        // Data for dropdowns
+        const locationData = { /* ... your location data ... */ };
+        const strandData = { /* ... your strand data ... */ };
+        
+        let currentFormId = null;
+
+        // The main function to build the form
+        async function buildForm() {
+            const params = new URLSearchParams(window.location.search);
+            currentFormId = params.get('id');
+
+            if (!currentFormId) {
+                document.getElementById('form-title').innerText = "Error: No form specified.";
+                return;
+            }
+          
+            try {
+                const doc = await db.collection("forms").doc(currentFormId).get();
+                if (!doc.exists) {
+                    document.getElementById('form-title').innerText = "Error: Form not found.";
+                    return;
+                }
+
+                const formData = doc.data();
+                
+                document.title = `${formData.title} | DSWD CM Tool`;
+                document.getElementById('form-title').innerText = formData.title;
+                document.getElementById('mobile-header-title').innerText = formData.title;
+                document.getElementById('form-description').innerText = formData.description;
+                
+                // This loop builds the form from the database definition
+                formData.fields.forEach(field => {
+                    const group = document.createElement('div');
+                    group.className = 'form-group';
+                    const label = document.createElement('label');
+                    label.setAttribute('for', field.name);
+                    label.textContent = field.label;
+                    group.appendChild(label);
+
+                    let input;
+                    if (field.type === 'select') {
+                        input = document.createElement('select');
+                        const defaultOption = document.createElement('option');
+                        defaultOption.value = "";
+                        defaultOption.textContent = `Select ${field.label}...`;
+                        input.appendChild(defaultOption);
+                        (field.options || []).forEach(opt => {
+                            const option = document.createElement('option');
+                            option.value = opt;
+                            option.textContent = opt;
+                            input.appendChild(option);
+                        });
+                    } else {
+                        input = document.createElement('input');
+                        input.type = field.type;
+                    }
+
+                    input.id = field.name;
+                    input.name = field.name;
+                    if (field.required) input.required = true;
+                    if (field.placeholder) input.placeholder = field.placeholder;
+                  
+                    group.appendChild(input);
+                    formContainer.appendChild(group);
+                });
+
+                const submitButton = document.createElement('button');
+                submitButton.type = 'submit';
+                submitButton.textContent = 'Submit Form';
+                formContainer.appendChild(submitButton);
+
+                // Add Event Listeners for smart dropdowns after they are created
+                // ... (your chained dropdown logic here) ...
+
+            } catch (error) {
+                console.error("Error rendering form:", error);
+                document.getElementById('form-title').innerText = "Error loading form.";
+            }
+        }
+
+        // Form Submission Logic
         formContainer.addEventListener('submit', function(e) {
             e.preventDefault();
-            
             const submitButton = formContainer.querySelector('button[type="submit"]');
             const formData = new FormData(formContainer);
             const submissionData = Object.fromEntries(formData.entries());
+            const payload = { formId: currentFormId, submissionData: submissionData };
 
-            // NEW: We now create a payload that includes the form's ID
-            const payload = {
-                formId: currentFormId, // We get this from the onload function
-                submissionData: submissionData
-            };
-            
             if (!payload.formId) {
                 alert("Error: Form ID is missing. Cannot submit.");
                 return;
@@ -41,13 +155,12 @@
             statusDiv.style.display = 'block';
             statusDiv.innerHTML = 'Submitting data...';
 
-            // We will use a new, smarter endpoint
             const endpoint = 'https://casemanagement-server.onrender.com/submit-form';
 
             fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload) // Send the new payload
+                body: JSON.stringify(payload)
             })
             .then(response => response.json())
             .then(result => {
@@ -64,6 +177,10 @@
                 submitButton.textContent = 'Submit Form';
             });
         });
-    </script>
+
+        // Start the process
+        buildForm();
+    });
+  </script>
 </body>
 </html>
