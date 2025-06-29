@@ -4,51 +4,111 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Forms | DSWD CM Tool</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    /* --- The CSS is exactly the same as index.html --- */
-    body { font-family: 'Outfit', sans-serif; background-color: #f9f9f9; margin: 0; color: #333; }
-    .sidebar { margin: 0; padding: 0; width: 250px; background-color: #9b1c20; position: fixed; height: 100%; overflow: auto; }
-    .sidebar .header { padding: 22px 16px; background-color: #7e161a; color: white; font-size: 20px; font-weight: 700; text-align: center; }
-    .sidebar a { display: block; color: white; padding: 16px; text-decoration: none; font-weight: 600; border-bottom: 1px solid #a83337; }
-    .sidebar a.active { background-color: #ffc107; color: #333; }
-    .sidebar a:hover:not(.active) { background-color: #a83337; }
-    .main-content { margin-left: 265px; padding: 20px; }
-    h2 { text-align: center; color: #9b1c20; font-size: 24px;}
-    .form-list { display: grid; grid-template-columns: 1fr; gap: 15px; }
-    .form-card { display: block; background: #fafafa; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-decoration: none; color: #333; transition: background 0.2s; }
-    .form-card:hover { background-color: #f0f0f0; }
-    .form-card strong { font-size: 1.1em; }
-    @media screen and (max-width: 700px) { .sidebar { width: 100%; height: auto; position: relative; } .sidebar a { float: left; } .main-content { margin-left: 0; } }
+    /* This is the full, modern CSS from your other pages */
+    :root { --primary-red: #9b1c20; --dark-red: #7e161a; --accent-gold: #ffc107; --light-gray: #f4f7f6; --text-dark: #333333; --text-light: #ffffff; --border-color: #e0e0e0; }
+    body { font-family: 'Inter', sans-serif; background-color: var(--light-gray); margin: 0; color: var(--text-dark); }
+    .page-container { display: flex; }
+    .sidebar { width: 250px; background-color: var(--primary-red); height: 100vh; position: fixed; left: 0; top: 0; transition: transform 0.3s ease; }
+    .sidebar .header { padding: 20px; background-color: var(--dark-red); color: var(--text-light); font-size: 20px; font-weight: 700; text-align: center; }
+    .sidebar a { display: block; color: var(--text-light); padding: 18px 20px; text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--dark-red); transition: background-color 0.2s; }
+    .sidebar a.active { background-color: var(--accent-gold); color: var(--text-dark); }
+    .sidebar a:hover:not(.active) { background-color: var(--dark-red); }
+    .main-content { flex-grow: 1; margin-left: 250px; padding: 30px; transition: margin-left 0.3s ease; }
+    .header-bar { display: none; justify-content: space-between; align-items: center; background: var(--text-light); padding: 10px 20px; border-bottom: 1px solid var(--border-color); }
+    .menu-toggle { font-size: 28px; cursor: pointer; background: none; border: none; }
+    h2 { color: var(--primary-red); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+    /* Styles for the form list */
+    .form-list { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 20px;}
+    .form-card { display: block; background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; text-decoration: none; color: var(--text-dark); transition: box-shadow 0.2s; }
+    .form-card:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .form-card strong { font-size: 1.1em; color: var(--primary-red); }
+
+    @media screen and (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); z-index: 1000; }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; padding: 20px; }
+      .header-bar { display: flex; }
+    }
   </style>
 </head>
 <body>
+  <div class="page-container">
+    <div class="sidebar" id="sidebar">
+      <div class="header">DSWD CM Tool</div>
+      <a href="index.html">🏠 Dashboard</a>
+      <a href="forms.html" class="active">📝 Fill Out a Form</a>
+      <a href="upload.html">📤 Upload Files</a>
+      <a href="admin.html">⚙️ Admin Panel</a>
+      <a href="login.html">🔒 Login</a>
+    </div>
 
-  <div class="sidebar">
-    <div class="header">DSWD CM Tool</div>
-    <a href="index.html">🏠 Dashboard</a>
-    <a href="forms.html" class="active">📝 Fill Out a Form</a>
-    <a href="upload.html">📤 Upload Files</a>
-    <a href="login.html">🔒 Admin Login</a>
-  </div>
+    <div class="main-content">
+      <header class="header-bar">
+        <span style="font-weight: 700; color: var(--primary-red);">Forms</span>
+        <button class="menu-toggle" id="menu-toggle">☰</button>
+      </header>
 
-  <div class="main-content">
-    <h2>📝 Select a Form to Fill Out</h2>
-    <div class="form-list">
-      <a href="shs_form.html" class="form-card">
-        <strong>Senior High School Profiling (with AI Summary)</strong><br>
-        <small>Profile a student and get an instant AI-powered summary and career path suggestion.</small>
-      </a>
-       <a href="#" class="form-card" style="background:#f9f9f9; color:#999; cursor: not-allowed;">
-        <strong>Referral Form</strong><br>
-        <small>Coming soon.</small>
-      </a>
-       <a href="#" class="form-card" style="background:#f9f9f9; color:#999; cursor: not-allowed;">
-        <strong>Household Assessment</strong><br>
-        <small>Coming soon.</small>
-      </a>
+      <h2>📝 Select a Form to Fill Out</h2>
+      <div class="form-list" id="form-list-container">
+          <p>Loading available forms from the database...</p>
+      </div>
     </div>
   </div>
+    
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script>
+    // --- Mobile menu script ---
+    document.getElementById('menu-toggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+    
+    // --- Dynamic Form Menu Loader ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
+      authDomain: "casemanagement-project.firebaseapp.com",
+      projectId: "casemanagement-project"
+    };
 
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
+    window.onload = async () => {
+      const container = document.getElementById('form-list-container');
+      container.innerHTML = '<p>Loading available forms...</p>';
+
+      try {
+        const formsSnapshot = await db.collection("forms").get();
+        
+        if (formsSnapshot.empty) {
+            container.innerHTML = '<p>No forms have been created yet.</p>';
+            return;
+        }
+
+        container.innerHTML = ''; // Clear the "Loading..." message
+
+        formsSnapshot.forEach(doc => {
+            const formData = doc.data();
+            const formId = doc.id;
+
+            const link = document.createElement('a');
+            link.href = `view_form.html?id=${formId}`;
+            link.className = 'form-card';
+            link.innerHTML = `<strong>${formData.title || 'Untitled Form'}</strong><br><small>${formData.description || 'No description.'}</small>`;
+            
+            container.appendChild(link);
+        });
+      } catch (error) {
+          console.error("Error loading forms list:", error);
+          container.innerHTML = '<p>Error loading forms. Please check security rules.</p>';
+      }
+    };
+  </script>
 </body>
 </html>
