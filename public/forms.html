@@ -8,11 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    /* This is the full, modern CSS from your other pages */
     :root { --primary-red: #9b1c20; --dark-red: #7e161a; --accent-gold: #ffc107; --light-gray: #f4f7f6; --text-dark: #333333; --text-light: #ffffff; --border-color: #e0e0e0; }
     body { font-family: 'Inter', sans-serif; background-color: var(--light-gray); margin: 0; color: var(--text-dark); }
     .page-container { display: flex; }
-    .sidebar { width: 250px; background-color: var(--primary-red); height: 100vh; position: fixed; left: 0; top: 0; transition: transform 0.3s ease; }
+    .sidebar { width: 250px; background-color: var(--primary-red); height: 100vh; position: fixed; left: 0; top: 0; transition: transform 0.3s ease; z-index: 1001; }
     .sidebar .header { padding: 20px; background-color: var(--dark-red); color: var(--text-light); font-size: 20px; font-weight: 700; text-align: center; }
     .sidebar a { display: block; color: var(--text-light); padding: 18px 20px; text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--dark-red); transition: background-color 0.2s; }
     .sidebar a.active { background-color: var(--accent-gold); color: var(--text-dark); }
@@ -20,19 +19,12 @@
     .main-content { flex-grow: 1; margin-left: 250px; padding: 30px; transition: margin-left 0.3s ease; }
     .header-bar { display: none; justify-content: space-between; align-items: center; background: var(--text-light); padding: 10px 20px; border-bottom: 1px solid var(--border-color); }
     .menu-toggle { font-size: 28px; cursor: pointer; background: none; border: none; }
-    h2 { color: var(--primary-red); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
-    /* Styles for the form list */
+    h2 { color: var(--primary-red); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 0; }
     .form-list { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 20px;}
     .form-card { display: block; background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; text-decoration: none; color: var(--text-dark); transition: box-shadow 0.2s; }
     .form-card:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     .form-card strong { font-size: 1.1em; color: var(--primary-red); }
-
-    @media screen and (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); z-index: 1000; }
-      .sidebar.open { transform: translateX(0); }
-      .main-content { margin-left: 0; padding: 20px; }
-      .header-bar { display: flex; }
-    }
+    @media screen and (max-width: 768px) { .sidebar { transform: translateX(-100%); z-index: 1000; } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; padding: 20px; } .header-bar { display: flex; } }
   </style>
 </head>
 <body>
@@ -62,53 +54,55 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script>
-    // --- Mobile menu script ---
-    document.getElementById('menu-toggle').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('open');
-    });
-    
-    // --- Dynamic Form Menu Loader ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
-      authDomain: "casemanagement-project.firebaseapp.com",
-      projectId: "casemanagement-project"
-    };
-
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.firestore();
-
-    window.onload = async () => {
-      const container = document.getElementById('form-list-container');
-      container.innerHTML = '<p>Loading available forms...</p>';
-
-      try {
-        const formsSnapshot = await db.collection("forms").get();
-        
-        if (formsSnapshot.empty) {
-            container.innerHTML = '<p>No forms have been created yet.</p>';
-            return;
-        }
-
-        container.innerHTML = ''; // Clear the "Loading..." message
-
-        formsSnapshot.forEach(doc => {
-            const formData = doc.data();
-            const formId = doc.id;
-
-            const link = document.createElement('a');
-            link.href = `view_form.html?id=${formId}`;
-            link.className = 'form-card';
-            link.innerHTML = `<strong>${formData.title || 'Untitled Form'}</strong><br><small>${formData.description || 'No description.'}</small>`;
-            
-            container.appendChild(link);
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('menu-toggle').addEventListener('click', () => {
+          document.getElementById('sidebar').classList.toggle('open');
         });
-      } catch (error) {
-          console.error("Error loading forms list:", error);
-          container.innerHTML = '<p>Error loading forms. Please check security rules.</p>';
-      }
-    };
+        
+        const firebaseConfig = {
+          apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
+          authDomain: "casemanagement-project.firebaseapp.com",
+          projectId: "casemanagement-project"
+        };
+
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
+        async function loadFormsList() {
+          const container = document.getElementById('form-list-container');
+          container.innerHTML = '<p>Loading available forms...</p>';
+
+          try {
+            const formsSnapshot = await db.collection("forms").orderBy("title").get();
+            
+            if (formsSnapshot.empty) {
+                container.innerHTML = '<p>No forms have been created yet.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+
+            formsSnapshot.forEach(doc => {
+                const formData = doc.data();
+                const formId = doc.id;
+
+                const link = document.createElement('a');
+                link.href = `view_form.html?id=${formId}`;
+                link.className = 'form-card';
+                link.innerHTML = `<strong>${formData.title || 'Untitled Form'}</strong><br><small>${formData.description || 'No description.'}</small>`;
+                
+                container.appendChild(link);
+            });
+          } catch (error) {
+              console.error("Error loading forms list:", error);
+              container.innerHTML = '<p>Error loading forms. Please check security rules.</p>';
+          }
+        };
+
+        loadFormsList();
+    });
   </script>
 </body>
 </html>
