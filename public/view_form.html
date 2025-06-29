@@ -117,9 +117,9 @@
         document.getElementById('mobile-header-title').innerText = formData.title;
         document.getElementById('form-description').innerText = formData.description;
         
-        // This loop builds the form from the database definition
         formData.fields.forEach(field => {
           const group = document.createElement('div');
+          group.className = 'form-group';
           const label = document.createElement('label');
           label.setAttribute('for', field.name);
           label.textContent = field.label;
@@ -157,14 +157,12 @@
         submitButton.textContent = 'Submit Form';
         formContainer.appendChild(submitButton);
 
-        // --- Add Event Listeners for smart dropdowns ---
         const regionSelect = formContainer.querySelector('select[name="region"]');
         const provinceSelect = formContainer.querySelector('select[name="province"]');
         const citySelect = formContainer.querySelector('select[name="city"]');
         const trackSelect = formContainer.querySelector('select[name="track"]');
         const strandSelect = formContainer.querySelector('select[name="strand"]');
 
-        // Initialize dependent dropdowns as disabled
         if (provinceSelect) provinceSelect.disabled = true;
         if (citySelect) citySelect.disabled = true;
         if (strandSelect) strandSelect.disabled = true;
@@ -173,7 +171,6 @@
             regionSelect.addEventListener('change', (event) => {
                 const selectedRegion = event.target.value;
                 const provinces = locationData[selectedRegion] ? Object.keys(locationData[selectedRegion]).sort() : [];
-                
                 provinceSelect.innerHTML = '<option value="">Select Province...</option>';
                 provinces.forEach(prov => {
                     const option = document.createElement('option');
@@ -192,7 +189,6 @@
                 const selectedRegion = regionSelect.value;
                 const selectedProvince = event.target.value;
                 const cities = locationData[selectedRegion]?.[selectedProvince]?.sort() || [];
-
                 citySelect.innerHTML = '<option value="">Select City/Municipality...</option>';
                 cities.forEach(city => {
                     const option = document.createElement('option');
@@ -208,7 +204,6 @@
             trackSelect.addEventListener('change', (event) => {
                 const selectedTrack = event.target.value;
                 const strands = strandData[selectedTrack] || [];
-                
                 strandSelect.innerHTML = '<option value="">Select Strand...</option>';
                 strands.forEach(s => {
                     const option = document.createElement('option');
@@ -228,7 +223,41 @@
 
     formContainer.addEventListener('submit', function(e) {
       e.preventDefault();
-      // --- Your form submission logic here ---
+      
+      const submitButton = formContainer.querySelector('button[type="submit"]');
+      const formData = new FormData(formContainer);
+      const data = Object.fromEntries(formData.entries());
+
+      submitButton.disabled = true;
+      submitButton.textContent = 'Submitting...';
+      statusDiv.style.display = 'block';
+      statusDiv.innerHTML = 'Submitting data to server... Please be patient.';
+
+      const endpoint = 'https://casemanagement-server.onrender.com/submit-shs';
+
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.text().then(text => { throw new Error(`Server error: ${response.statusText} - ${text}`) });
+        }
+        return response.json();
+      })
+      .then(result => {
+        statusDiv.innerHTML = `<strong>✅ Success!</strong><br>Form has been submitted and data saved to the Google Sheet.`;
+        submitButton.disabled = false;
+        submitButton.textContent = 'Submit Another Form';
+        formContainer.reset(); 
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        statusDiv.innerHTML = '❌ Error submitting form. Please try again.';
+        submitButton.disabled = false;
+        submitButton.textContent = 'Submit Form';
+      });
     });
   </script>
 </body>
