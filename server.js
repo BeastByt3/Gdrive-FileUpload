@@ -105,7 +105,7 @@ app.post('/submit-form', async (req, res) => {
 				day: "2-digit",
 				hour: "2-digit",
 				minute: "2-digit",
-				hour12: false  // ✅ 24-hour format
+				hour12: true  // ✅ 24-hour format
 			}),
 			...dataRow
 			]]
