@@ -83,8 +83,6 @@
         const db = firebase.firestore();
         
         let currentFormId = null;
-        let currentFormFields = [];
-        let currentSpreadsheetId = null;
 
         async function buildForm() {
             const params = new URLSearchParams(window.location.search);
@@ -103,17 +101,16 @@
                 }
 
                 const formData = doc.data();
-                currentFormFields = formData.fields || [];
-                currentSpreadsheetId = formData.spreadsheetId || null;
                 
                 document.title = `${formData.title} | DSWD CM Tool`;
                 formTitle.innerText = formData.title;
                 mobileHeaderTitle.innerText = formData.title;
                 formDescription.innerText = formData.description;
                 
-                formContainer.innerHTML = ''; // Clear previous content
+                formContainer.innerHTML = '';
 
-                currentFormFields.forEach(field => {
+                // This logic dynamically builds the form from your database definition
+                (formData.fields || []).forEach(field => {
                     const group = document.createElement('div');
                     group.className = 'form-group';
                     const label = document.createElement('label');
@@ -165,14 +162,14 @@
             const formData = new FormData(formContainer);
             const submissionData = Object.fromEntries(formData.entries());
 
+            // The payload sent to the server. It now correctly includes the formId.
             const payload = {
-                spreadsheetId: currentSpreadsheetId,
-                headers: currentFormFields,
+                formId: currentFormId,
                 submissionData: submissionData
             };
             
-            if (!payload.spreadsheetId) {
-                alert("Error: This form is not connected to a Google Sheet. Please configure it in the admin panel.");
+            if (!payload.formId) {
+                alert("Error: Form ID is missing. Cannot submit.");
                 return;
             }
 
@@ -188,15 +185,19 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.error || 'Server returned an error') });
+                }
+                return response.json();
+            })
             .then(result => {
-                if (!result.success) { throw new Error(result.error || 'Unknown server error'); }
-                statusDiv.innerHTML = `<strong>✅ Success!</strong><br>Your submission has been saved.`;
+                statusDiv.innerHTML = `<strong>✅ Success!</strong><br>${result.message}`;
                 formContainer.reset();
             })
             .catch(error => {
-                console.error('Error:', error);
-                statusDiv.innerHTML = '❌ Error submitting form. Please try again.';
+                console.error('Submission Error:', error);
+                statusDiv.innerHTML = `❌ Error submitting form: ${error.message}`;
             })
             .finally(() => {
                 submitButton.disabled = false;
@@ -204,6 +205,7 @@
             });
         });
         
+        // Start the process
         buildForm();
     });
   </script>
