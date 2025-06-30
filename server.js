@@ -1,29 +1,123 @@
 const express = require('express');
 const cors = require('cors');
+const { GoogleAuth } = require('google-auth-library');
+const { google } = require('googleapis');
+const multer = require('multer');
+const stream = require('stream');
+const admin = require('firebase-admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// --- MIDDLEWARE ---
 app.use(cors());
 app.use(express.json());
 
-// A simple test endpoint
-app.post('/submit-form', (req, res) => {
-  // If this message appears in your Render logs, we have succeeded!
-  console.log("SUCCESS! The /submit-form endpoint was reached!");
-  
-  // It receives the data and logs it
-  console.log("Data received:", req.body);
+// --- INITIALIZATION ---
+try {
+    const serviceAccount = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log("Firebase Admin initialized successfully.");
+} catch (e) {
+    console.error("FATAL ERROR: Could not initialize Firebase Admin. Check GOOGLE_CREDENTIALS environment variable.", e);
+}
+const db = admin.firestore();
 
-  // It sends a simple success message back
-  res.status(200).json({ success: true, message: 'Server received the request!' });
-});
 
-// A simple root endpoint to prove the server is running
+// --- HELPER FUNCTION ---
+async function getGoogleAuthClient(scopes) {
+  const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+  const auth = new GoogleAuth({ credentials, scopes });
+  return auth.getClient();
+}
+
+
+// --- ROUTES ---
+
+// Root URL to confirm server is running
 app.get('/', (req, res) => {
-  res.send('Simple Test Server is LIVE.');
+  res.send('Case Management Server is live and running.');
 });
 
-app.listen(PORT, () => {
-  console.log(`Simple Test Server is running on port ${PORT}`);
+
+// File Upload Endpoint
+app.post('/upload-file', multer({ storage: multer.memoryStorage() }).single('file'), async (req, res) => {
+  console.log("--- New file upload request ---");
+  try {
+    if (!req.file) return res.status(400).json({ success: false, error: 'No file uploaded.' });
+    
+    const authClient = await getGoogleAuthClient(['https://www.googleapis.com/auth/drive.file']);
+    const drive = google.drive({ version: 'v3', auth: authClient });
+    
+    const bufferStream = new stream.PassThrough().end(req.file.buffer);
+    const { data } = await drive.files.create({
+      media: { mimeType: req.file.mimetype, body: bufferStream },
+      requestBody: { name: req.file.originalname, parents: [process.env.DRIVE_FOLDER_ID] },
+      fields: 'id,name',
+    });
+    
+    console.log(`Success! Uploaded File ID: ${data.id}`);
+    res.status(200).json({ success: true, message: `File "${data.name}" uploaded successfully.` });
+  } catch (error) {
+    console.error('--- ERROR during file upload ---', error);
+    res.status(500).json({ success: false, error: 'Error uploading file to Google Drive.' });
+  }
+});
+
+
+// The smart, dynamic Form Submission Endpoint
+app.post('/submit-form', async (req, res) => {
+  console.log("--- New DYNAMIC form submission request ---");
+  try {
+    const { formId, submissionData } = req.body;
+
+    if (!formId || !submissionData) {
+      return res.status(400).json({ success: false, error: 'Missing formId or submission data.' });
+    }
+    
+    const formDoc = await db.collection('forms').doc(formId).get();
+    if (!formDoc.exists) {
+      return res.status(404).json({ success: false, error: 'Form definition not found.' });
+    }
+    const formDef = formDoc.data();
+    const spreadsheetId = formDef.spreadsheetId;
+    const headers = formDef.fields.map(field => field.label);
+    const dataRow = formDef.fields.map(field => submissionData[field.name] || '');
+    
+    const authClient = await getGoogleAuthClient(['https://www.googleapis.com/auth/spreadsheets']);
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
+    
+    const headerCheck = await sheets.spreadsheets.values.get({ spreadsheetId, range: 'Sheet1!1:1' });
+    if (!headerCheck.data.values || headerCheck.data.values.length === 0) {
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: 'Sheet1!A1',
+            valueInputOption: 'USER_ENTERED',
+            resource: { values: [['Timestamp', ...headers]] },
+        });
+    }
+
+    await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: 'Sheet1',
+        valueInputOption: 'USER_ENTERED',
+        insertDataOption: 'INSERT_ROWS',
+        resource: { values: [[new Date().toISOString(), ...dataRow]] },
+    });
+
+    console.log("Success! Data saved to Google Sheet correctly.");
+    res.status(200).json({ success: true, message: 'Your submission has been saved.' });
+
+  } catch (error) {
+    console.error('--- CRITICAL ERROR in /submit-form endpoint ---', error);
+    res.status(500).json({ success: false, error: 'A server error occurred.' });
+  }
+});
+
+
+// Start the server
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running and listening on port ${PORT}`);
 });
