@@ -1,46 +1,29 @@
 const express = require('express');
 const cors = require('cors');
-const { GoogleAuth } = require('google-auth-library');
-const { google } = require('googleapis');
-const multer = require('multer');
-const stream = require('stream');
-const admin = require('firebase-admin');
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Render will provide the PORT
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
-// --- INITIALIZATION ---
-try {
-    const serviceAccount = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
-    console.log("Firebase Admin initialized successfully.");
-} catch (e) {
-    console.error("FATAL ERROR: Could not initialize Firebase Admin. Check GOOGLE_CREDENTIALS environment variable.", e);
-}
-const db = admin.firestore();
+// A simple test endpoint
+app.post('/submit-form', (req, res) => {
+  // If this message appears in your Render logs, we have succeeded!
+  console.log("SUCCESS! The /submit-form endpoint was reached!");
+  
+  // It receives the data and logs it
+  console.log("Data received:", req.body);
 
-// --- All of your endpoints are the same ---
-// (/upload-file, /submit-form, etc.)
-// ...
-
-app.post('/submit-form', async (req, res) => {
-  // ... your existing, correct submission logic ...
+  // It sends a simple success message back
+  res.status(200).json({ success: true, message: 'Server received the request!' });
 });
 
-app.post('/upload-file', multer({ storage: multer.memoryStorage() }).single('file'), async (req, res) => {
-  // ... your existing, correct upload logic ...
+// A simple root endpoint to prove the server is running
+app.get('/', (req, res) => {
+  res.send('Simple Test Server is LIVE.');
 });
 
-// ... and so on for other routes.
-
-
-// === THIS IS THE ONLY LINE THAT CHANGES ===
-// We explicitly tell the server to listen on host '0.0.0.0'
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running and listening on port ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Simple Test Server is running on port ${PORT}`);
 });
