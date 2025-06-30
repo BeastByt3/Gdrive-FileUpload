@@ -92,12 +92,26 @@ app.post('/submit-form', async (req, res) => {
     }
 
     await sheets.spreadsheets.values.append({
-        spreadsheetId,
-        range: 'Sheet1',
-        valueInputOption: 'USER_ENTERED',
-        insertDataOption: 'INSERT_ROWS',
-        resource: { values: [[new Date().toISOString(), ...dataRow]] },
-    });
+		spreadsheetId,
+		range: 'Sheet1',
+		valueInputOption: 'USER_ENTERED',
+		insertDataOption: 'INSERT_ROWS',
+		resource: {
+			values: [[
+			new Date().toLocaleString("en-PH", {
+				timeZone: "Asia/Manila",
+				year: "numeric",
+				month: "2-digit",
+				day: "2-digit",
+				hour: "2-digit",
+				minute: "2-digit",
+				our12: true
+			}),
+			...dataRow
+			]]
+		},
+	});
+
 
     console.log("Success! Data saved to the correct Google Sheet.");
     res.status(200).json({ success: true, message: 'Your submission has been saved.' });
