@@ -32,12 +32,22 @@
 <body>
   <div class="page-container">
     <div class="sidebar" id="sidebar">
-      <div class="header">DSWD CM Tool</div>
-      <a href="index.html">🏠 Dashboard</a>
-      <a href="forms.html">📝 Fill Out a Form</a>
-      <a href="upload.html" class="active">📤 Upload Files</a>
-      <a href="admin.html">⚙️ Admin Panel</a>
-      <a href="login.html">🔒 Login</a>
+        <div class="header">DSWD CM Tool</div>
+        
+        <div id="public-nav">
+            <a href="index.html" class="active">🏠 Dashboard</a>
+            <a href="forms.html">📝 Fill Out a Form</a>
+            <a href="upload.html">📤 Upload Files</a>
+            <a href="login.html">🔒 Admin Login</a>
+        </div>
+
+        <div id="admin-nav" style="display: none;">
+            <a href="index.html" class="active">🏠 Dashboard</a>
+            <a href="forms.html">📝 Fill Out a Form</a>
+            <a href="upload.html">📤 Upload Files</a>
+            <a href="admin.html">⚙️ Admin Panel</a>
+            <a href="#" id="logout-button">🚪 Logout</a>
+        </div>
     </div>
 
     <div class="main-content">

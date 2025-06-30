@@ -8,48 +8,188 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root { --primary-red: #9b1c20; --dark-red: #7e161a; --accent-gold: #ffc107; --light-gray: #f4f7f6; --text-dark: #333333; --text-light: #ffffff; --border-color: #e0e0e0; --blue: #3498db; }
-    body { font-family: 'Inter', sans-serif; background-color: var(--light-gray); margin: 0; color: var(--text-dark); }
-    .page-container { display: flex; }
-    .sidebar { width: 250px; background-color: var(--primary-red); height: 100vh; position: fixed; left: 0; top: 0; transition: transform 0.3s ease; }
-    .sidebar .header { padding: 20px; background-color: var(--dark-red); color: var(--text-light); font-size: 20px; font-weight: 700; text-align: center; }
-    .sidebar a { display: block; color: var(--text-light); padding: 18px 20px; text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--dark-red); transition: background-color 0.2s; }
-    .sidebar a.active { background-color: var(--accent-gold); color: var(--text-dark); }
-    .sidebar a:hover:not(.active) { background-color: var(--dark-red); }
-    .main-content { flex-grow: 1; margin-left: 250px; padding: 30px; transition: margin-left 0.3s ease; }
-    .header-bar { display: none; justify-content: space-between; align-items: center; background: var(--text-light); padding: 10px 20px; border-bottom: 1px solid var(--border-color); }
-    .menu-toggle { font-size: 28px; cursor: pointer; background: none; border: none; }
-    h2 { color: var(--primary-red); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 0; }
-    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
-    .btn-create { background-color: var(--primary-red); color: var(--text-light); padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; transition: background-color 0.2s; }
+    :root {
+      --primary-red: #9b1c20;
+      --dark-red: #7e161a;
+      --accent-gold: #ffc107;
+      --light-gray: #f4f7f6;
+      --text-dark: #333333;
+      --text-light: #ffffff;
+      --border-color: #e0e0e0;
+      --blue: #3498db;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--light-gray);
+      margin: 0;
+      color: var(--text-dark);
+    }
+    .page-container {
+      display: flex;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: var(--primary-red);
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      transition: transform 0.3s ease;
+      z-index: 1001;
+    }
+    .sidebar .header {
+      padding: 20px;
+      background-color: var(--dark-red);
+      color: var(--text-light);
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .sidebar a {
+      display: block;
+      color: var(--text-light);
+      padding: 18px 20px;
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 1px solid var(--dark-red);
+      transition: background-color 0.2s;
+    }
+    .sidebar a.active {
+      background-color: var(--accent-gold);
+      color: var(--text-dark);
+    }
+    .sidebar a:hover:not(.active) {
+      background-color: var(--dark-red);
+    }
+    .main-content {
+      flex-grow: 1;
+      margin-left: 250px;
+      padding: 0;
+      transition: margin-left 0.3s ease;
+    }
+    .header-bar {
+      display: none; /* Hidden on desktop */
+      justify-content: space-between;
+      align-items: center;
+      background: var(--text-light);
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .menu-toggle {
+      font-size: 28px;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+    .content-pusher {
+        padding: 30px;
+    }
+    h2 {
+      color: var(--primary-red);
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 10px;
+      margin-top: 0;
+    }
+    .admin-header { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        margin-bottom: 20px; 
+        flex-wrap: wrap; 
+    }
+    .btn-create { 
+        background-color: var(--primary-red); 
+        color: var(--text-light); padding: 10px 20px; 
+        text-decoration: none; 
+        border-radius: 6px; 
+        font-weight: 600; 
+        transition: background-color 0.2s; 
+    }
     .btn-create:hover { background-color: var(--dark-red); }
-    .form-list-table { width: 100%; border-collapse: collapse; background-color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
-    .form-list-table th, .form-list-table td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
-    .form-list-table th { background-color: var(--light-gray); font-weight: 600; }
-    .actions-cell button, .actions-cell a { margin-right: 8px; font-family: 'Inter', sans-serif; }
-    .btn-edit { background-color: var(--accent-gold); color: var(--text-dark); padding: 6px 12px; text-decoration: none; border-radius: 5px; font-size: 14px; border: none; cursor: pointer; font-weight: 600; }
-    .btn-clone { background-color: var(--blue); color: white; padding: 6px 12px; text-decoration: none; border-radius: 5px; font-size: 14px; border: none; cursor: pointer; font-weight: 600;}
-    .btn-remove { background-color: #dc3545; color: white; padding: 6px 12px; text-decoration: none; border-radius: 5px; font-size: 14px; border: none; cursor: pointer; font-weight: 600;}
-    @media screen and (max-width: 768px) { .sidebar { transform: translateX(-100%); z-index: 1000; } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; padding: 20px; } .header-bar { display: flex; } .admin-header { flex-direction: column; align-items: flex-start; } .btn-create { margin-top: 15px; width: 100%; text-align: center; box-sizing: border-box;} }
+    .form-list-table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        background-color: #fff; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        border-radius: 8px; 
+        overflow: hidden; 
+    }
+    .form-list-table th, .form-list-table td { 
+        padding: 15px; 
+        text-align: left; 
+        border-bottom: 1px solid var(--border-color); 
+    }
+    .form-list-table th { 
+        background-color: var(--light-gray); 
+        font-weight: 600; 
+    }
+    .actions-cell button, .actions-cell a { 
+        margin-right: 8px; 
+        font-family: 'Inter', sans-serif; 
+        font-size: 14px;
+        border-radius: 5px;
+        cursor: pointer;
+        padding: 6px 12px;
+        text-decoration: none;
+        border: none;
+        font-weight: 600;
+    }
+    .btn-clone { background-color: var(--blue); color: white; }
+    .btn-edit { background-color: var(--accent-gold); color: var(--text-dark); }
+    .btn-remove { background-color: #dc3545; color: white; }
+    .overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        opacity: 0; visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .overlay.active { opacity: 1; visibility: visible; }
+
+    @media screen and (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
+      .main-content { margin-left: 0; }
+      .header-bar { display: flex; }
+      .content-pusher { padding: 20px; }
+      .admin-header { flex-direction: column; align-items: flex-start; } 
+      .btn-create { margin-top: 15px; width: 100%; text-align: center; box-sizing: border-box;}
+    }
   </style>
 </head>
 <body>
+
   <div class="page-container">
     <div class="sidebar" id="sidebar">
         <div class="header">DSWD CM Tool</div>
-        <a href="index.html">🏠 Dashboard</a>
-        <a href="forms.html">📝 Fill Out a Form</a>
-        <a href="upload.html">📤 Upload Files</a>
-        <a href="admin.html" class="active">⚙️ Admin Panel</a>
-        <a href="login.html">🔒 Login</a>
+        
+        <div id="public-nav" style="display: none;">
+            <a href="index.html">🏠 Dashboard</a>
+            <a href="forms.html">📝 Fill Out a Form</a>
+            <a href="upload.html">📤 Upload Files</a>
+            <a href="login.html">🔒 Admin Login</a>
+        </div>
+
+        <div id="admin-nav">
+            <a href="index.html">🏠 Dashboard</a>
+            <a href="forms.html">📝 Fill Out a Form</a>
+            <a href="upload.html">📤 Upload Files</a>
+            <a href="admin.html" class="active">⚙️ Admin Panel</a>
+            <a href="#" id="logout-button">🚪 Logout</a>
+        </div>
     </div>
 
-    <div class="main-content">
-        <header class="header-bar">
-            <span style="font-weight: 700; color: var(--primary-red);">Admin Panel</span>
-            <button class="menu-toggle" id="menu-toggle">☰</button>
-        </header>
-        
+    <div class="main-content" id="main-content">
+      <header class="header-bar">
+        <span style="font-weight: 700; color: var(--primary-red);">Admin Panel</span>
+        <button class="menu-toggle" id="menu-toggle">☰</button>
+      </header>
+      
+      <div class="content-pusher">
         <div class="admin-header">
             <h2>Form Management</h2>
             <a href="edit_form.html" class="btn-create">+ Create New Form</a>
@@ -69,7 +209,9 @@
                 <tr><td colspan="3" style="text-align: center; padding: 20px;">Loading forms...</td></tr>
             </tbody>
         </table>
+      </div>
     </div>
+    <div class="overlay" id="overlay"></div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -77,91 +219,139 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
   <script>
-    document.getElementById('menu-toggle').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('open');
-    });
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Smart Navigation and Mobile Menu Script ---
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const overlay = document.getElementById('overlay');
+        const publicNav = document.getElementById('public-nav');
+        const adminNav = document.getElementById('admin-nav');
+        const logoutButton = document.getElementById('logout-button');
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
-        authDomain: "casemanagement-project.firebaseapp.com",
-        projectId: "casemanagement-project"
-    };
-    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        loadForms();
-      } else {
-        window.location.href = 'login.html';
-      }
-    });
-
-    async function loadForms() {
-      const tableBody = document.getElementById('forms-table-body');
-      tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Loading forms...</td></tr>';
-      try {
-        const formsSnapshot = await db.collection('forms').orderBy('title').get();
-        if (formsSnapshot.empty) {
-            tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">No forms found. Click "Create New Form" to start.</td></tr>';
-            return;
-        }
-
-        tableBody.innerHTML = '';
-        formsSnapshot.forEach(doc => {
-            const formData = doc.data();
-            const formId = doc.id;
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><strong>${formData.title || 'Untitled Form'}</strong></td>
-                <td>${formData.description || 'No description.'}</td>
-                <td class="actions-cell">
-                    <button class="btn-clone" onclick="cloneForm('${formId}')">Clone</button>
-                    <a href="edit_form.html?id=${formId}" class="btn-edit">Edit</a>
-                    <button class="btn-remove" onclick="deleteForm('${formId}')">Delete</button>
-                </td>
-            `;
-            tableBody.appendChild(row);
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
         });
-      } catch (error) {
-        console.error("Error loading forms:", error);
-        tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Error loading forms. Check console.</td></tr>';
-      }
-    }
+        const closeMenu = () => {
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            }
+        };
+        overlay.addEventListener('click', closeMenu);
+        mainContent.addEventListener('click', closeMenu);
 
-    async function cloneForm(formId) {
-        if (!confirm('Are you sure you want to create a copy of this form?')) return;
-        try {
-            const originalDocRef = db.collection('forms').doc(formId);
-            const doc = await originalDocRef.get();
-            if (doc.exists) {
-                const dataToClone = doc.data();
-                dataToClone.title += " (Copy)";
-                await db.collection('forms').add(dataToClone);
-                alert('Form cloned successfully! You can now edit the new copy.');
+        // --- Firebase Initialization ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
+            authDomain: "casemanagement-project.firebaseapp.com",
+            projectId: "casemanagement-project"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // --- Page-Specific Logic ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                publicNav.style.display = 'none';
+                adminNav.style.display = 'block';
                 loadForms();
             } else {
-                alert('Could not find the original form to clone.');
+                window.location.href = 'login.html';
             }
-        } catch (error) {
-            console.error("Error cloning form:", error);
-            alert("An error occurred while cloning the form.");
-        }
-    }
+        });
 
-    async function deleteForm(formId) {
-      if (confirm(`Are you sure you want to permanently delete this form? This cannot be undone.`)) {
-        try {
-          await db.collection('forms').doc(formId).delete();
-          alert("Form deleted successfully!");
-          loadForms();
-        } catch (error) {
-          console.error("Error deleting form:", error);
-          alert("Error deleting form.");
+        if(logoutButton) {
+            logoutButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (confirm("Are you sure you want to log out?")) {
+                    auth.signOut().then(() => { window.location.href = 'index.html'; });
+                }
+            });
         }
-      }
-    }
+
+        async function loadForms() {
+            const tableBody = document.getElementById('forms-table-body');
+            tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Loading forms...</td></tr>';
+            try {
+                const formsSnapshot = await db.collection('forms').orderBy('title').get();
+                if (formsSnapshot.empty) {
+                    tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">No forms found. Click "Create New Form" to start.</td></tr>';
+                    return;
+                }
+                tableBody.innerHTML = '';
+                formsSnapshot.forEach(doc => {
+                    const formData = doc.data();
+                    const formId = doc.id;
+                    const row = document.createElement('tr');
+                    // We need to use textContent to prevent HTML injection from user data
+                    const titleCell = document.createElement('td');
+                    titleCell.innerHTML = `<strong></strong>`;
+                    titleCell.querySelector('strong').textContent = formData.title || 'Untitled Form';
+
+                    const descCell = document.createElement('td');
+                    descCell.textContent = formData.description || 'No description.';
+
+                    const actionsCell = document.createElement('td');
+                    actionsCell.className = 'actions-cell';
+                    actionsCell.innerHTML = `
+                        <button class="btn-clone">Clone</button>
+                        <a href="edit_form.html?id=${formId}" class="btn-edit">Edit</a>
+                        <button class="btn-remove">Delete</button>
+                    `;
+                    actionsCell.querySelector('.btn-clone').onclick = () => cloneForm(formId);
+                    actionsCell.querySelector('.btn-remove').onclick = () => deleteForm(formId);
+                    
+                    row.appendChild(titleCell);
+                    row.appendChild(descCell);
+                    row.appendChild(actionsCell);
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error loading forms:", error);
+                tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Error loading forms.</td></tr>';
+            }
+        }
+
+        window.cloneForm = async function(formId) {
+            if (!confirm('Are you sure you want to create a copy of this form?')) return;
+            try {
+                const originalDocRef = db.collection('forms').doc(formId);
+                const doc = await originalDocRef.get();
+                if (doc.exists) {
+                    const dataToClone = doc.data();
+                    dataToClone.title += " (Copy)";
+                    await db.collection('forms').add(dataToClone);
+                    alert('Form cloned successfully!');
+                    loadForms();
+                } else {
+                    alert('Could not find the original form to clone.');
+                }
+            } catch (error) {
+                console.error("Error cloning form:", error);
+                alert("An error occurred while cloning the form.");
+            }
+        }
+
+        window.deleteForm = async function(formId) {
+          if (confirm(`Are you sure you want to permanently delete this form? This cannot be undone.`)) {
+            try {
+              await db.collection('forms').doc(formId).delete();
+              alert("Form deleted successfully!");
+              loadForms();
+            } catch (error) {
+              console.error("Error deleting form:", error);
+              alert("Error deleting form.");
+            }
+          }
+        }
+    });
   </script>
+
 </body>
 </html>
