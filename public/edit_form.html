@@ -3,32 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Edit Form | DSWD CM Tool</title>
+  <title>Form Editor | DSWD CM Tool</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    /* This uses the same professional, mobile-friendly CSS as your other pages */
     :root { --primary-red: #9b1c20; --dark-red: #7e161a; --accent-gold: #ffc107; --light-gray: #f4f7f6; --text-dark: #333333; --text-light: #ffffff; --border-color: #e0e0e0; }
     body { font-family: 'Inter', sans-serif; background-color: var(--light-gray); margin: 0; color: var(--text-dark); }
     .page-container { display: flex; }
-    .sidebar { width: 250px; background-color: var(--primary-red); height: 100vh; position: fixed; left: 0; top: 0; transition: transform 0.3s ease; }
+    .sidebar { width: 250px; background-color: var(--primary-red); height: 100vh; position: fixed; left: 0; top: 0; transition: transform 0.3s ease; z-index: 1001; }
     .sidebar .header { padding: 20px; background-color: var(--dark-red); color: var(--text-light); font-size: 20px; font-weight: 700; text-align: center; }
-    .sidebar a { display: block; color: var(--text-light); padding: 18px 20px; text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--dark-red); transition: background-color 0.2s; }
+    .sidebar a { display: block; color: var(--text-light); padding: 18px 20px; text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--dark-red); }
     .sidebar a.active { background-color: var(--accent-gold); color: var(--text-dark); }
     .sidebar a:hover:not(.active) { background-color: var(--dark-red); }
     .main-content { flex-grow: 1; margin-left: 250px; padding: 30px; transition: margin-left 0.3s ease; }
-    .header-bar { display: none; justify-content: space-between; align-items: center; background: var(--text-light); padding: 10px 20px; border-bottom: 1px solid var(--border-color); }
-    .menu-toggle { font-size: 28px; cursor: pointer; background: none; border: none; }
-    h2 { color: var(--primary-red); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 0; }
+    .header-bar { display: none; }
     .form-wrapper { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    h2, h3 { color: var(--primary-red); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 0; }
+    h3 { margin-top: 30px; border-bottom-style: dashed; }
     label { display: block; margin-top: 20px; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
-    input, textarea { width: 100%; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid var(--border-color); box-sizing: border-box; background-color: var(--light-gray); font-family: 'Inter', sans-serif; }
-    textarea { resize: vertical; min-height: 80px; }
-    .btn-save { background-color: #28a745; color: var(--text-light); padding: 14px; border: none; border-radius: 6px; margin-top: 30px; cursor: pointer; font-weight: 600; width: 100%; font-size: 16px; transition: background-color 0.2s; }
-    .btn-save:hover { background-color: #218838; }
-    #status { margin-top: 15px; font-weight: bold; }
-    @media screen and (max-width: 768px) { .sidebar { transform: translateX(-100%); z-index: 1000; } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; padding: 20px; } .header-bar { display: flex; } }
+    input, textarea, select { width: 100%; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid var(--border-color); box-sizing: border-box; background-color: #fff; font-family: 'Inter', sans-serif; }
+    .btn-save { background-color: #28a745; color: var(--text-light); padding: 14px; border: none; border-radius: 6px; margin-top: 30px; cursor: pointer; font-weight: 600; width: 100%; font-size: 16px; }
+    .toolbox button { background-color: var(--primary-red); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: 10px; margin-bottom: 10px; }
+    .field-list { list-style: none; padding: 0; margin-top: 20px; }
+    .field-item { background: var(--light-gray); padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); }
+    .field-item span { font-weight: 600; }
+    .btn-remove-field { background-color: #dc3545; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer; }
+    @media screen and (max-width: 768px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; } }
   </style>
 </head>
 <body>
@@ -41,15 +42,9 @@
         <a href="admin.html" class="active">⚙️ Admin Panel</a>
         <a href="login.html">🔒 Login</a>
     </div>
-
     <div class="main-content">
-        <header class="header-bar">
-            <span style="font-weight: 700; color: var(--primary-red);">Form Editor</span>
-            <button class="menu-toggle" id="menu-toggle">☰</button>
-        </header>
-        
         <div class="form-wrapper">
-            <h2 id="page-title">Create New Form</h2>
+            <h2 id="page-title">Loading...</h2>
             <form id="form-editor">
                 <div>
                     <label for="formTitle">Form Title</label>
@@ -63,8 +58,17 @@
                     <label for="spreadsheetId">Google Sheet ID</label>
                     <input type="text" id="spreadsheetId" required placeholder="Paste the ID from your Google Sheet URL here...">
                 </div>
-                
-                <button type="submit" class="btn-save">Save Form Details</button>
+
+                <div class="field-editor">
+                    <h3>Form Fields</h3>
+                    <div class="toolbox">
+                        <button type="button" onclick="addField('text')">+ Add Text Field</button>
+                        <button type="button" onclick="addField('date')">+ Add Date Field</button>
+                        <button type="button" onclick="addField('select')">+ Add Dropdown</button>
+                    </div>
+                    <ul id="field-list"></ul>
+                </div>
+                <button type="submit" class="btn-save">Save Entire Form</button>
             </form>
             <div id="status"></div>
         </div>
@@ -74,7 +78,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
   <script>
     document.addEventListener('DOMContentLoaded', () => {
         const formEditor = document.getElementById('form-editor');
@@ -83,8 +86,10 @@
         const formTitleInput = document.getElementById('formTitle');
         const formDescriptionInput = document.getElementById('formDescription');
         const spreadsheetIdInput = document.getElementById('spreadsheetId');
+        const fieldListUI = document.getElementById('field-list');
         
         let currentFormId = null;
+        let localFields = []; // Local array to manage the fields
 
         const firebaseConfig = {
             apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
@@ -102,6 +107,8 @@
                 if (currentFormId) {
                     pageTitle.textContent = 'Edit Form';
                     loadFormData();
+                } else {
+                    pageTitle.textContent = 'Create New Form';
                 }
             } else {
                 window.location.href = 'login.html';
@@ -116,6 +123,8 @@
                     formTitleInput.value = data.title || '';
                     formDescriptionInput.value = data.description || '';
                     spreadsheetIdInput.value = data.spreadsheetId || '';
+                    localFields = data.fields || [];
+                    renderFieldsList();
                 } else {
                     statusDiv.textContent = "Error: Form not found.";
                 }
@@ -125,34 +134,60 @@
             }
         }
 
+        function renderFieldsList() {
+            fieldListUI.innerHTML = '';
+            if(!localFields) localFields = [];
+            localFields.forEach((field, index) => {
+                const li = document.createElement('li');
+                li.className = 'field-item';
+                li.innerHTML = `<span>${field.label} <em>(${field.type})</em></span> <button type="button" class="btn-remove-field" onclick="removeField(${index})">Delete</button>`;
+                fieldListUI.appendChild(li);
+            });
+        }
+
+        window.addField = function(type) {
+            const label = prompt(`Enter the label for the new ${type} field:`);
+            if (!label || !label.trim()) return;
+
+            const name = label.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+            const newField = { type: type, label: label.trim(), name: name, required: true };
+
+            if (type === 'select') {
+                const optionsStr = prompt("Enter dropdown options, separated by a comma (e.g. Yes,No,Maybe)");
+                newField.options = optionsStr ? optionsStr.split(',').map(s => s.trim()) : [];
+            }
+            localFields.push(newField);
+            renderFieldsList();
+        }
+
+        window.removeField = function(index) {
+            if (confirm(`Are you sure you want to remove the field "${localFields[index].label}"?`)) {
+                localFields.splice(index, 1);
+                renderFieldsList();
+            }
+        }
+
         formEditor.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const formDataToSave = {
                 title: formTitleInput.value,
                 description: formDescriptionInput.value,
                 spreadsheetId: spreadsheetIdInput.value,
+                fields: localFields
             };
-
             statusDiv.textContent = 'Saving...';
-
             try {
                 if (currentFormId) {
-                    // Editing an existing form
-                    await db.collection('forms').doc(currentFormId).update(formDataToSave);
-                    statusDiv.textContent = '✅ Form details updated successfully!';
+                    await db.collection('forms').doc(currentFormId).set(formDataToSave);
+                    statusDiv.textContent = '✅ Form updated successfully!';
                 } else {
-                    // Creating a new form
-                    formDataToSave.fields = []; // Add an empty 'fields' array, ready for the next step
                     const newDocRef = await db.collection('forms').add(formDataToSave);
                     statusDiv.textContent = '✅ New form created successfully!';
-                    // Automatically redirect to the edit page for the new form
-                    // This allows the user to immediately start adding fields
                     window.location.href = `edit_form.html?id=${newDocRef.id}`;
                 }
             } catch (error) {
                 console.error("Error saving form:", error);
-                statusDiv.textContent = '❌ Error saving form. See console for details.';
+                statusDiv.textContent = '❌ Error saving form.';
             }
         });
     });
