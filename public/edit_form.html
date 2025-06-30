@@ -18,7 +18,7 @@
     .sidebar a.active { background-color: var(--accent-gold); color: var(--text-dark); }
     .sidebar a:hover:not(.active) { background-color: var(--dark-red); }
     .main-content { flex-grow: 1; margin-left: 250px; padding: 0; transition: margin-left 0.3s ease; }
-    .header-bar { display: none; justify-content: space-between; align-items: center; background: var(--text-light); padding: 10px 20px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1000; }
+    .header-bar { display: none; justify-content: space-between; align-items: center; background: var(--text-light); padding: 10px 20px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1000;}
     .menu-toggle { font-size: 28px; cursor: pointer; background: none; border: none; }
     .content-pusher { padding: 30px; }
     .form-wrapper { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -26,7 +26,6 @@
     h3 { margin-top: 30px; border-bottom-style: dashed; }
     label { display: block; margin-top: 20px; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
     input, textarea, select { width: 100%; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid var(--border-color); box-sizing: border-box; background-color: #fff; font-family: 'Inter', sans-serif; }
-    textarea { resize: vertical; min-height: 80px; }
     button, .btn { color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
     .btn-save { background-color: #28a745; width: 100%; font-size: 16px; margin-top: 30px; }
     .toolbox button { background-color: var(--primary-red); margin-right: 10px; margin-bottom: 10px; }
@@ -34,16 +33,18 @@
     .field-item { background: var(--light-gray); padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); cursor: grab; }
     .field-item:active { cursor: grabbing; }
     .field-item span { font-weight: 600; }
-    .field-item .actions button { margin-left: 10px; }
+    .field-item .actions button, .field-item .actions a { margin-left: 10px; }
     .btn-edit-field { background-color: var(--accent-gold); color: var(--text-dark); }
     .btn-remove-field { background-color: #dc3545; }
     #status { margin-top: 15px; font-weight: bold; }
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; }
     .modal-content { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 500px; }
     .modal-actions { margin-top: 20px; text-align: right; }
-    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+    .logic-builder { margin-top: 20px; padding: 15px; border: 1px dashed var(--border-color); border-radius: 6px; }
+    .logic-builder select { margin-bottom: 10px; }
+    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; opacity: 0; visibility: hidden; }
     .overlay.active { opacity: 1; visibility: visible; }
-    @media screen and (max-width: 768px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); box-shadow: 5px 0 15px rgba(0,0,0,0.2); } .main-content { margin-left: 0; } .header-bar { display: flex; } .content-pusher { padding: 20px; } }
+    @media screen and (max-width: 768px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; } .header-bar { display: flex; } .content-pusher { padding: 20px; } }
   </style>
 </head>
 <body>
@@ -89,8 +90,8 @@
                         <hr>
                         <h3>Form Fields (Drag to reorder)</h3>
                         <div class="toolbox">
-                            <button type="button" onclick="addField('text')">+ Add Text Field</button>
-                            <button type="button" onclick="addField('date')">+ Add Date Field</button>
+                            <button type="button" onclick="addField('text')">+ Add Text</button>
+                            <button type="button" onclick="addField('date')">+ Add Date</button>
                             <button type="button" onclick="addField('select')">+ Add Dropdown</button>
                         </div>
                         <ul id="field-list"></ul>
@@ -115,6 +116,21 @@
         <div id="edit-options-container" style="display:none;">
             <label for="edit-options">Dropdown Options (comma-separated)</label>
             <textarea id="edit-options" rows="3"></textarea>
+        </div>
+        <div class="logic-builder">
+            <label><strong>Display Logic (Optional)</strong></label>
+            <p style="font-size: 13px; margin-top: 0;">Show this field only when another field has a specific value.</p>
+            <label for="edit-logic-toggle">Enable Display Logic</label>
+            <select id="edit-logic-toggle" onchange="toggleLogicBuilder()">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+            </select>
+            <div id="logic-rules" style="display: none;">
+                <label for="edit-logic-sourceField">When field...</label>
+                <select id="edit-logic-sourceField"></select>
+                <label for="edit-logic-operator">is equal to...</label>
+                <input type="text" id="edit-logic-value" placeholder="Enter the exact value to match">
+            </div>
         </div>
         <div class="modal-actions">
             <button type="button" class="btn-remove-field" onclick="closeEditModal()">Cancel</button>
@@ -147,6 +163,10 @@
         const publicNav = document.getElementById('public-nav');
         const adminNav = document.getElementById('admin-nav');
         const logoutButton = document.getElementById('logout-button');
+        const logicToggle = document.getElementById('edit-logic-toggle');
+        const logicRulesDiv = document.getElementById('logic-rules');
+        const sourceFieldSelect = document.getElementById('edit-logic-sourceField');
+        const logicValueInput = document.getElementById('edit-logic-value');
         
         let currentFormId = null;
         let localFields = [];
@@ -159,26 +179,11 @@
             }
         });
 
-        menuToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            sidebar.classList.toggle('open');
-            overlay.classList.toggle('active');
-        });
-
-        const closeMenu = () => {
-            if (sidebar.classList.contains('open')) {
-                sidebar.classList.remove('open');
-                overlay.classList.remove('active');
-            }
-        };
+        menuToggle.addEventListener('click', (e) => { e.stopPropagation(); sidebar.classList.toggle('open'); overlay.classList.toggle('active'); });
+        const closeMenu = () => { if (sidebar.classList.contains('open')) { sidebar.classList.remove('open'); overlay.classList.remove('active'); } };
         overlay.addEventListener('click', closeMenu);
-        mainContent.addEventListener('click', closeMenu);
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc",
-            authDomain: "casemanagement-project.firebaseapp.com",
-            projectId: "casemanagement-project"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc", authDomain: "casemanagement-project.firebaseapp.com", projectId: "casemanagement-project" };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.firestore();
         const auth = firebase.auth();
@@ -195,17 +200,13 @@
                 } else {
                     pageTitle.textContent = 'Create New Form';
                 }
-            } else {
-                window.location.href = 'login.html';
-            }
+            } else { window.location.href = 'login.html'; }
         });
 
         if (logoutButton) {
             logoutButton.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (confirm("Are you sure you want to log out?")) {
-                    auth.signOut().then(() => { window.location.href = 'index.html'; });
-                }
+                if (confirm("Are you sure you want to log out?")) { auth.signOut().then(() => { window.location.href = 'index.html'; }); }
             });
         }
 
@@ -219,13 +220,8 @@
                     spreadsheetIdInput.value = data.spreadsheetId || '';
                     localFields = data.fields || [];
                     renderFieldsList();
-                } else {
-                    statusDiv.textContent = "Error: Form not found.";
                 }
-            } catch (error) {
-                console.error("Error loading form data:", error);
-                statusDiv.textContent = "Error loading form data.";
-            }
+            } catch (error) { console.error("Error loading form data:", error); }
         }
 
         window.renderFieldsList = function() {
@@ -233,12 +229,7 @@
             localFields.forEach((field, index) => {
                 const li = document.createElement('li');
                 li.className = 'field-item';
-                li.innerHTML = `
-                    <span>${field.label} <em>(${field.type})</em></span> 
-                    <div class="actions">
-                        <button type="button" class="btn-edit-field" onclick="openEditModal(${index})">Edit</button>
-                        <button type="button" class="btn-remove-field" onclick="removeField(${index})">Delete</button>
-                    </div>`;
+                li.innerHTML = `<span>${field.label} <em>(${field.type})</em></span><div class="actions"><button type="button" class="btn-edit-field" onclick="openEditModal(${index})">Edit</button><button type="button" class="btn-remove-field" onclick="removeField(${index})">Delete</button></div>`;
                 fieldListUI.appendChild(li);
             });
         }
@@ -267,13 +258,39 @@
             const field = localFields[index];
             editingFieldIndexInput.value = index;
             editLabelInput.value = field.label;
+
+            sourceFieldSelect.innerHTML = '<option value="">Select a field...</option>';
+            localFields.forEach((f, i) => {
+                if (i !== index) {
+                    const option = document.createElement('option');
+                    option.value = f.name;
+                    option.textContent = f.label;
+                    sourceFieldSelect.appendChild(option);
+                }
+            });
+            
+            if (field.visibilityRule) {
+                logicToggle.value = 'true';
+                sourceFieldSelect.value = field.visibilityRule.sourceField;
+                logicValueInput.value = field.visibilityRule.value;
+            } else {
+                logicToggle.value = 'false';
+                sourceFieldSelect.value = '';
+                logicValueInput.value = '';
+            }
+            
             if (field.type === 'select') {
                 editOptionsTextarea.value = (field.options || []).join(', ');
                 editOptionsContainer.style.display = 'block';
             } else {
                 editOptionsContainer.style.display = 'none';
             }
+            toggleLogicBuilder();
             editModal.style.display = 'flex';
+        }
+        
+        window.toggleLogicBuilder = function() {
+            logicRulesDiv.style.display = logicToggle.value === 'true' ? 'block' : 'none';
         }
 
         window.closeEditModal = function() {
@@ -288,6 +305,17 @@
             if (localFields[index].type === 'select') {
                 localFields[index].options = editOptionsTextarea.value.split(',').map(s => s.trim()).filter(s => s);
             }
+
+            if (logicToggle.value === 'true' && sourceFieldSelect.value && logicValueInput.value) {
+                localFields[index].visibilityRule = {
+                    sourceField: sourceFieldSelect.value,
+                    operator: 'equals',
+                    value: logicValueInput.value.trim()
+                };
+            } else {
+                delete localFields[index].visibilityRule;
+            }
+
             renderFieldsList();
             closeEditModal();
         }
@@ -297,14 +325,12 @@
             const submitButton = formEditor.querySelector('button[type="submit"]');
             submitButton.disabled = true;
             statusDiv.textContent = 'Saving...';
-
             const formDataToSave = {
                 title: formTitleInput.value,
                 description: formDescriptionInput.value,
                 spreadsheetId: spreadsheetIdInput.value,
                 fields: localFields
             };
-
             try {
                 let docRef;
                 if (currentFormId) {
@@ -315,7 +341,6 @@
                     currentFormId = docRef.id;
                 }
                 statusDiv.textContent = '✅ Form design saved! Syncing headers...';
-
                 const response = await fetch('https://casemanagement-server.onrender.com/update-sheet-headers', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -327,14 +352,13 @@
                 if (!response.ok) throw new Error('Header sync failed.');
                 const result = await response.json();
                 statusDiv.textContent = `✅ ${result.message}`;
-                
                 if (!window.location.search.includes(currentFormId)) {
                     window.history.replaceState({}, '', `edit_form.html?id=${currentFormId}`);
                     pageTitle.textContent = 'Edit Form';
                 }
             } catch (error) {
                 console.error("Error during save process:", error);
-                statusDiv.textContent = '❌ An error occurred during the save process.';
+                statusDiv.textContent = '❌ An error occurred.';
             } finally {
                 submitButton.disabled = false;
             }
