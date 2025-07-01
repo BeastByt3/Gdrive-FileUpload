@@ -1,9 +1,9 @@
 {
   "name": "casemanagement-uploader",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "src/services/server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node src/services/server.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
