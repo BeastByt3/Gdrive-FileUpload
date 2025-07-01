@@ -26,22 +26,28 @@
     h3 { margin-top: 30px; border-bottom-style: dashed; }
     label { display: block; margin-top: 20px; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
     input, textarea, select { width: 100%; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid var(--border-color); box-sizing: border-box; background-color: #fff; font-family: 'Inter', sans-serif; }
-    button, .btn { color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    button, .btn { color: white; border: none; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; }
     .btn-save { background-color: #28a745; width: 100%; font-size: 16px; margin-top: 30px; }
     .toolbox button { background-color: var(--primary-red); margin-right: 10px; margin-bottom: 10px; }
     .field-list { list-style: none; padding: 0; margin-top: 20px; }
     .field-item { background: var(--light-gray); padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); cursor: grab; }
     .field-item:active { cursor: grabbing; }
-    .field-item span { font-weight: 600; }
-    .field-item .actions button, .field-item .actions a { margin-left: 10px; }
+    .field-item span { font-weight: 600; word-break: break-all; }
+    .field-item .actions { display: flex; align-items: center; flex-shrink: 0; }
+    .field-item .actions button { margin-left: 10px; }
     .btn-edit-field { background-color: var(--accent-gold); color: var(--text-dark); }
     .btn-remove-field { background-color: #dc3545; }
     #status { margin-top: 15px; font-weight: bold; }
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; }
-    .modal-content { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 500px; }
-    .modal-actions { margin-top: 20px; text-align: right; }
+    .modal-content { background: white; padding: 0; border-radius: 8px; width: 90%; max-width: 500px; display: flex; flex-direction: column; max-height: 85vh; }
+    .modal-header { padding: 20px 30px; border-bottom: 1px solid var(--border-color); }
+    .modal-header h3 { margin: 0; padding: 0; border-bottom: none; }
+    .modal-body { padding: 1px 30px 20px 30px; overflow-y: auto; }
+    .modal-actions { margin-top: auto; padding: 20px 30px; text-align: right; border-top: 1px solid var(--border-color); background-color: var(--light-gray); display: flex; gap: 10px; }
+    .btn-cancel { background-color: #6c757d; flex: 1; }
+    .modal-actions .btn-save { margin-top: 0; flex: 1; background-color: #28a745; }
     .logic-builder { margin-top: 20px; padding: 15px; border: 1px dashed var(--border-color); border-radius: 6px; }
-    .logic-builder select { margin-bottom: 10px; }
+    .logic-builder select, .logic-builder input, .logic-builder textarea { margin-bottom: 10px; }
     .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; opacity: 0; visibility: hidden; }
     .overlay.active { opacity: 1; visibility: visible; }
     @media screen and (max-width: 768px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; } .header-bar { display: flex; } .content-pusher { padding: 20px; } }
@@ -51,41 +57,18 @@
   <div class="page-container">
     <div class="sidebar" id="sidebar">
         <div class="header">DSWD CM Tool</div>
-        <div id="public-nav" style="display: none;">
-            <a href="index.html">🏠 Dashboard</a>
-            <a href="forms.html">📝 Fill Out a Form</a>
-            <a href="upload.html">📤 Upload Files</a>
-            <a href="login.html">🔒 Admin Login</a>
-        </div>
-        <div id="admin-nav">
-            <a href="index.html">🏠 Dashboard</a>
-            <a href="forms.html">📝 Fill Out a Form</a>
-            <a href="upload.html">📤 Upload Files</a>
-            <a href="admin.html" class="active">⚙️ Admin Panel</a>
-            <a href="#" id="logout-button">🚪 Logout</a>
-        </div>
+        <div id="public-nav" style="display: none;"><a href="index.html">🏠 Dashboard</a><a href="forms.html">📝 Fill Out a Form</a><a href="upload.html">📤 Upload Files</a><a href="login.html">🔒 Admin Login</a></div>
+        <div id="admin-nav"><a href="index.html">🏠 Dashboard</a><a href="forms.html">📝 Fill Out a Form</a><a href="upload.html">📤 Upload Files</a><a href="admin.html" class="active">⚙️ Admin Panel</a><a href="#" id="logout-button">🚪 Logout</a></div>
     </div>
     <div class="main-content" id="main-content">
-        <header class="header-bar">
-            <span id="mobile-header-title" style="font-weight: 700; color: var(--primary-red);">Form Editor</span>
-            <button class="menu-toggle" id="menu-toggle">☰</button>
-        </header>
+        <header class="header-bar"><span id="mobile-header-title" style="font-weight: 700; color: var(--primary-red);">Form Editor</span><button class="menu-toggle" id="menu-toggle">☰</button></header>
         <div class="content-pusher">
             <div class="form-wrapper">
                 <h2 id="page-title">Loading...</h2>
                 <form id="form-editor">
-                    <div>
-                        <label for="formTitle">Form Title</label>
-                        <input type="text" id="formTitle" required>
-                    </div>
-                    <div>
-                        <label for="formDescription">Description</label>
-                        <textarea id="formDescription" required></textarea>
-                    </div>
-                    <div>
-                        <label for="spreadsheetId">Google Sheet ID</label>
-                        <input type="text" id="spreadsheetId" required placeholder="Paste the ID from your Google Sheet URL here...">
-                    </div>
+                    <div><label for="formTitle">Form Title</label><input type="text" id="formTitle" required></div>
+                    <div><label for="formDescription">Description</label><textarea id="formDescription" required></textarea></div>
+                    <div><label for="spreadsheetId">Google Sheet ID</label><input type="text" id="spreadsheetId" required placeholder="Paste the ID from your Google Sheet URL here..."></div>
                     <div class="field-editor">
                         <hr>
                         <h3>Form Fields (Drag to reorder)</h3>
@@ -104,36 +87,26 @@
     </div>
     <div class="overlay" id="overlay"></div>
   </div>
-
   <div class="modal-overlay" id="edit-modal">
     <div class="modal-content">
-        <h3>Edit Field</h3>
-        <input type="hidden" id="editing-field-index">
-        <div>
-            <label for="edit-label">Field Label (The question)</label>
-            <input type="text" id="edit-label">
-        </div>
-        <div id="edit-options-container" style="display:none;">
-            <label for="edit-options">Dropdown Options (comma-separated)</label>
-            <textarea id="edit-options" rows="3"></textarea>
-        </div>
-        <div class="logic-builder">
-            <label><strong>Display Logic (Optional)</strong></label>
-            <p style="font-size: 13px; margin-top: 0;">Show this field only when another field has a specific value.</p>
-            <label for="edit-logic-toggle">Enable Display Logic</label>
-            <select id="edit-logic-toggle" onchange="toggleLogicBuilder()">
-                <option value="false">No</option>
-                <option value="true">Yes</option>
-            </select>
-            <div id="logic-rules" style="display: none;">
-                <label for="edit-logic-sourceField">When field...</label>
-                <select id="edit-logic-sourceField"></select>
-                <label for="edit-logic-operator">is equal to...</label>
-                <input type="text" id="edit-logic-value" placeholder="Enter the exact value to match">
+        <div class="modal-header"><h3>Edit Field</h3></div>
+        <div class="modal-body">
+            <input type="hidden" id="editing-field-index">
+            <div><label for="edit-label">Field Label</label><input type="text" id="edit-label"></div>
+            <div id="edit-options-container" style="display:none;"><label for="edit-options">Default Dropdown Options (comma-separated)</label><textarea id="edit-options" rows="3"></textarea></div>
+            <div class="logic-builder">
+                <label><strong>Conditional Logic (Optional)</strong></label>
+                <p style="font-size: 13px; margin-top: 0;">Change this field's visibility or options.</p>
+                <label for="edit-logic-action">Action:</label>
+                <select id="edit-logic-action" onchange="toggleLogicBuilder()"><option value="none">None</option><option value="show">Show/Hide this field</option><option value="updateOptions">Update dropdown options</option></select>
+                <div id="logic-rules" style="display: none;">
+                    <div id="show-hide-logic" style="display:none;"><label for="show-hide-sourceField">Show ONLY when...</label><select id="show-hide-sourceField"></select><label>is equal to...</label><input type="text" id="show-hide-value" placeholder="Enter the exact value"></div>
+                    <div id="update-options-logic" style="display:none;"><label>When user selects from...</label><select id="update-options-sourceField"></select><label>...update this dropdown with these options:</label><textarea id="update-options-value" rows="5" placeholder="e.g.&#10;Yes, Option A, Option B&#10;No, Option C, Option D"></textarea><p style="font-size:12px;margin-top:0;">Format: `Trigger,Option1,Option2...`</p></div>
+                </div>
             </div>
         </div>
         <div class="modal-actions">
-            <button type="button" class="btn-remove-field" onclick="closeEditModal()">Cancel</button>
+            <button type="button" class="btn btn-cancel" onclick="closeEditModal()">Cancel</button>
             <button type="button" class="btn btn-save" onclick="saveFieldEdit()">Save Changes</button>
         </div>
     </div>
@@ -158,30 +131,25 @@
         const editOptionsTextarea = document.getElementById('edit-options');
         const menuToggle = document.getElementById('menu-toggle');
         const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('main-content');
         const overlay = document.getElementById('overlay');
         const publicNav = document.getElementById('public-nav');
         const adminNav = document.getElementById('admin-nav');
         const logoutButton = document.getElementById('logout-button');
-        const logicToggle = document.getElementById('edit-logic-toggle');
+        const logicActionSelect = document.getElementById('edit-logic-action');
         const logicRulesDiv = document.getElementById('logic-rules');
-        const sourceFieldSelect = document.getElementById('edit-logic-sourceField');
-        const logicValueInput = document.getElementById('edit-logic-value');
+        const showHideLogicDiv = document.getElementById('show-hide-logic');
+        const updateOptionsLogicDiv = document.getElementById('update-options-logic');
+        const showHideSourceField = document.getElementById('show-hide-sourceField');
+        const showHideValue = document.getElementById('show-hide-value');
+        const updateOptionsSourceField = document.getElementById('update-options-sourceField');
+        const updateOptionsValue = document.getElementById('update-options-value');
         
         let currentFormId = null;
         let localFields = [];
 
-        new Sortable(fieldListUI, {
-            animation: 150,
-            onEnd: (evt) => {
-                const item = localFields.splice(evt.oldIndex, 1)[0];
-                localFields.splice(evt.newIndex, 0, item);
-            }
-        });
-
+        new Sortable(fieldListUI, { animation: 150, onEnd: (evt) => { const item = localFields.splice(evt.oldIndex, 1)[0]; localFields.splice(evt.newIndex, 0, item); } });
         menuToggle.addEventListener('click', (e) => { e.stopPropagation(); sidebar.classList.toggle('open'); overlay.classList.toggle('active'); });
-        const closeMenu = () => { if (sidebar.classList.contains('open')) { sidebar.classList.remove('open'); overlay.classList.remove('active'); } };
-        overlay.addEventListener('click', closeMenu);
+        overlay.addEventListener('click', () => { if (sidebar.classList.contains('open')) { sidebar.classList.remove('open'); overlay.classList.remove('active'); } });
 
         const firebaseConfig = { apiKey: "AIzaSyA-hORXx-5pHAN_JGnoD7Ll4K8XcMC2_fc", authDomain: "casemanagement-project.firebaseapp.com", projectId: "casemanagement-project" };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
@@ -203,12 +171,7 @@
             } else { window.location.href = 'login.html'; }
         });
 
-        if (logoutButton) {
-            logoutButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (confirm("Are you sure you want to log out?")) { auth.signOut().then(() => { window.location.href = 'index.html'; }); }
-            });
-        }
+        if (logoutButton) { logoutButton.addEventListener('click', (e) => { e.preventDefault(); if (confirm("Are you sure you want to log out?")) { auth.signOut().then(() => { window.location.href = 'index.html'; }); } }); }
 
         async function loadFormData() {
             try {
@@ -235,12 +198,12 @@
         }
 
         window.addField = function(type) {
-            const label = prompt(`Enter the label for the new ${type} field:`);
+            const label = prompt(`Enter label for the new ${type} field:`);
             if (!label || !label.trim()) return;
             const name = label.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
             const newField = { type, label: label.trim(), name, required: true };
             if (type === 'select') {
-                const optionsStr = prompt("Enter dropdown options, separated by a comma (e.g. Yes,No)");
+                const optionsStr = prompt("Enter dropdown options, comma-separated (e.g. Yes,No)");
                 newField.options = optionsStr ? optionsStr.split(',').map(s => s.trim()) : [];
             }
             localFields.push(newField);
@@ -258,25 +221,36 @@
             const field = localFields[index];
             editingFieldIndexInput.value = index;
             editLabelInput.value = field.label;
-
-            sourceFieldSelect.innerHTML = '<option value="">Select a field...</option>';
-            localFields.forEach((f, i) => {
-                if (i !== index) {
-                    const option = document.createElement('option');
-                    option.value = f.name;
-                    option.textContent = f.label;
-                    sourceFieldSelect.appendChild(option);
-                }
+            const sourceFields = [showHideSourceField, updateOptionsSourceField];
+            sourceFields.forEach(select => {
+                select.innerHTML = '<option value="">Select a field...</option>';
+                localFields.forEach((f, i) => {
+                    if (i !== index && f.type === 'select') {
+                        const option = document.createElement('option');
+                        option.value = f.name;
+                        option.textContent = f.label;
+                        select.appendChild(option.cloneNode(true));
+                    }
+                });
             });
             
-            if (field.visibilityRule) {
-                logicToggle.value = 'true';
-                sourceFieldSelect.value = field.visibilityRule.sourceField;
-                logicValueInput.value = field.visibilityRule.value;
+            if (field.conditionalLogic) {
+                logicActionSelect.value = field.conditionalLogic.action || 'none';
+                if (field.conditionalLogic.action === 'show') {
+                    showHideSourceField.value = field.conditionalLogic.sourceField || '';
+                    showHideValue.value = field.conditionalLogic.value || '';
+                } else if (field.conditionalLogic.action === 'updateOptions') {
+                    updateOptionsSourceField.value = field.conditionalLogic.sourceField || '';
+                    let optionsText = '';
+                    if (field.conditionalLogic.optionMap) {
+                        for (const key in field.conditionalLogic.optionMap) {
+                            optionsText += `${key}, ${field.conditionalLogic.optionMap[key].join(', ')}\n`;
+                        }
+                    }
+                    updateOptionsValue.value = optionsText.trim();
+                }
             } else {
-                logicToggle.value = 'false';
-                sourceFieldSelect.value = '';
-                logicValueInput.value = '';
+                logicActionSelect.value = 'none';
             }
             
             if (field.type === 'select') {
@@ -290,32 +264,46 @@
         }
         
         window.toggleLogicBuilder = function() {
-            logicRulesDiv.style.display = logicToggle.value === 'true' ? 'block' : 'none';
+            const action = logicActionSelect.value;
+            logicRulesDiv.style.display = action !== 'none' ? 'block' : 'none';
+            showHideLogicDiv.style.display = action === 'show' ? 'block' : 'none';
+            updateOptionsLogicDiv.style.display = action === 'updateOptions' ? 'block' : 'none';
         }
 
-        window.closeEditModal = function() {
-            editModal.style.display = 'none';
-        }
+        window.closeEditModal = function() { editModal.style.display = 'none'; }
 
         window.saveFieldEdit = function() {
             const index = editingFieldIndexInput.value;
             if (index === null || index === '') return;
-            localFields[index].label = editLabelInput.value.trim();
-            localFields[index].name = editLabelInput.value.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-            if (localFields[index].type === 'select') {
-                localFields[index].options = editOptionsTextarea.value.split(',').map(s => s.trim()).filter(s => s);
+            const fieldToEdit = localFields[index];
+            fieldToEdit.label = editLabelInput.value.trim();
+            fieldToEdit.name = editLabelInput.value.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+            if (fieldToEdit.type === 'select') {
+                fieldToEdit.options = editOptionsTextarea.value.split(',').map(s => s.trim()).filter(s => s);
             }
-
-            if (logicToggle.value === 'true' && sourceFieldSelect.value && logicValueInput.value) {
-                localFields[index].visibilityRule = {
-                    sourceField: sourceFieldSelect.value,
-                    operator: 'equals',
-                    value: logicValueInput.value.trim()
-                };
+            const action = logicActionSelect.value;
+            if (action === 'none') {
+                delete fieldToEdit.conditionalLogic;
             } else {
-                delete localFields[index].visibilityRule;
+                fieldToEdit.conditionalLogic = { action };
+                if (action === 'show') {
+                    fieldToEdit.conditionalLogic.sourceField = showHideSourceField.value;
+                    fieldToEdit.conditionalLogic.value = showHideValue.value.trim();
+                } else if (action === 'updateOptions') {
+                    fieldToEdit.conditionalLogic.sourceField = updateOptionsSourceField.value;
+                    const optionMap = {};
+                    const lines = updateOptionsValue.value.split('\n').filter(line => line.trim() !== '');
+                    lines.forEach(line => {
+                        const parts = line.split(',');
+                        if (parts.length >= 1) {
+                            const key = parts[0].trim();
+                            const options = parts.slice(1).map(s => s.trim()).filter(s => s);
+                            if (key) { optionMap[key] = options; }
+                        }
+                    });
+                    fieldToEdit.conditionalLogic.optionMap = optionMap;
+                }
             }
-
             renderFieldsList();
             closeEditModal();
         }
@@ -329,17 +317,13 @@
                 title: formTitleInput.value,
                 description: formDescriptionInput.value,
                 spreadsheetId: spreadsheetIdInput.value,
-                fields: localFields
+                fields: localFields,
+                isEnabled: true
             };
             try {
-                let docRef;
-                if (currentFormId) {
-                    docRef = db.collection('forms').doc(currentFormId);
-                    await docRef.set(formDataToSave);
-                } else {
-                    docRef = await db.collection('forms').add(formDataToSave);
-                    currentFormId = docRef.id;
-                }
+                const formRef = currentFormId ? db.collection('forms').doc(currentFormId) : await db.collection('forms').add(formDataToSave);
+                if (!currentFormId) { currentFormId = formRef.id; }
+                await formRef.set(formDataToSave, { merge: true });
                 statusDiv.textContent = '✅ Form design saved! Syncing headers...';
                 const response = await fetch('https://casemanagement-server.onrender.com/update-sheet-headers', {
                     method: 'POST',
